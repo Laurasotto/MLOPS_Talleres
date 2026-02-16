@@ -1,2 +1,0 @@
-# MLOPS_Talleres
-Talleres
