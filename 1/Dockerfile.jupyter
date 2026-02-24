@@ -1,0 +1,10 @@
+FROM python:3.11-slim
+WORKDIR /app
+
+RUN pip install --no-cache-dir uv
+COPY . /app
+
+RUN uv pip install --system -r requisitos.txt \
+ && uv pip install --system jupyterlab
+
+EXPOSE 8888
