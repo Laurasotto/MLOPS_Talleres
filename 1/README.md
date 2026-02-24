@@ -25,6 +25,7 @@
       - MODEL_DIR=/shared/model
   
 De esta manera lo monta dentro de cada contenedor y así ambos comparten archivos.
+
 3. Luego creamos las dos imagenes de Dockerfile.
 
 <img width="388" height="114" alt="image" src="https://github.com/user-attachments/assets/1486c013-0c2c-46f5-93ab-16c77c6a9f4b" />
