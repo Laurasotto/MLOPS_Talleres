@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
 
-os.getenv("MODEL_DIR", "model")
+MODEL_DIR = os.getenv("MODEL_DIR", "model")
 COLS_PATH   = os.path.join(MODEL_DIR, "model_columns.joblib")
 ACTIVE_PATH = os.path.join(MODEL_DIR, "active_model.txt")
 
