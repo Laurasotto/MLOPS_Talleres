@@ -159,8 +159,7 @@ def load_penguins():
             bill_depth_mm DOUBLE NULL,
             flipper_length_mm DOUBLE NULL,
             body_mass_g DOUBLE NULL,
-            sex VARCHAR(16),
-            year INT NULL
+            sex VARCHAR(16)
         )
         """
     )
@@ -177,7 +176,6 @@ def load_penguins():
             "flipper_length_mm",
             "body_mass_g",
             "sex",
-            "year",
         ]
     ].values.tolist()
 
@@ -186,8 +184,8 @@ def load_penguins():
     cur.executemany(
         f"""
         INSERT INTO {RAW_TABLE}
-        (species, island, bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g, sex, year)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+        (species, island, bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g, sex)
+        VALUES (%s,%s,%s,%s,%s,%s,%s)
         """,
         rows,
     )
