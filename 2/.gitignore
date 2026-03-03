@@ -1,0 +1,10 @@
+# Airflow runtime
+logs/
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+
+# Env files
+.env
