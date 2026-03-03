@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
+import subprocess
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
@@ -20,10 +21,12 @@ MYSQL_DB = os.getenv("MYSQL_DB", "data_db")
 MYSQL_USER = os.getenv("MYSQL_USER", "data_user")
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "data_pass")
 
-RAW_TABLE = os.getenv("RAW_TABLE", "penguins_raw")
+RAW_TABLE = "penguins_raw"
+POST_TABLE = "post_procesados"
 
 
 # =========================
+# HELPERS
 # =========================
 def mysql_conn():
     return mysql.connector.connect(
@@ -54,102 +57,69 @@ def table_exists(cur, table_name: str) -> bool:
     return cur.fetchone()[0] > 0
 
 
-def row_count(cur, table_name: str) -> int | None:
+def row_count(cur, table_name: str):
     if not table_exists(cur, table_name):
         return None
     cur.execute(f"SELECT COUNT(*) FROM {table_name}")
     return int(cur.fetchone()[0])
 
 
-def show_counts(cur, label: str):
-    cnt = row_count(cur, RAW_TABLE)
+def show_counts(cur, table_name: str, label: str):
+    cnt = row_count(cur, table_name)
     if cnt is None:
-        print(f"[{label}] {RAW_TABLE}: (no existe)")
+        print(f"[{label}] {table_name}: (no existe)")
     else:
-        print(f"[{label}] {RAW_TABLE}: {cnt} rows")
-
-
-def show_context(cur):
-    print("-" * 70)
-    print("Contexto de conexión MySQL")
-    print("-" * 70)
-
-    cur.execute("SELECT VERSION()")
-    version = cur.fetchone()[0]
-
-    cur.execute("SELECT DATABASE()")
-    current_db = cur.fetchone()[0]
-
-    cur.execute("SELECT CURRENT_USER()")
-    current_user = cur.fetchone()[0]
-
-    cur.execute("SELECT @@hostname")
-    hostname = cur.fetchone()[0]
-
-    print(f"Servidor MySQL     : {hostname}")
-    print(f"Versión MySQL      : {version}")
-    print(f"Usuario actual     : {current_user}")
-    print(f"Base de datos      : {current_db}")
-    print(f"Host conexión      : {MYSQL_HOST}:{MYSQL_PORT}")
-
-    cur.execute(
-        """
-        SELECT 
-            COUNT(*) AS total_tables,
-            ROUND(SUM(data_length + index_length)/1024/1024,2) AS total_mb
-        FROM information_schema.tables
-        WHERE table_schema = %s
-        """,
-        (MYSQL_DB,),
-    )
-    total_tables, total_mb = cur.fetchone()
-    total_mb = total_mb or 0
-
-    print(f"Total tablas       : {total_tables}")
-    print(f"Tamaño schema (MB) : {total_mb}")
-    print("-" * 70)
+        print(f"[{label}] {table_name}: {cnt} rows")
 
 
 # =========================
 # TASKS
 # =========================
 def wipe_db():
-    pretty_banner("TAREA 1: wipe_db (borrar contenido BD)")
+    pretty_banner("TAREA 1: wipe_db (reset completo)")
 
     conn = mysql_conn()
     cur = conn.cursor()
 
-    show_context(cur)
-    show_counts(cur, "ANTES")
+    show_counts(cur, RAW_TABLE, "ANTES RAW")
+    show_counts(cur, POST_TABLE, "ANTES POST")
 
+    # RAW → solo truncar
     if table_exists(cur, RAW_TABLE):
-        print(f"Borrando contenido de {RAW_TABLE} ...")
+        print(f"TRUNCATE {RAW_TABLE}")
         cur.execute(f"TRUNCATE TABLE {RAW_TABLE}")
-        print("Listo: TRUNCATE ejecutado.")
-    else:
-        print(f"No borro nada porque la tabla {RAW_TABLE} no existe aún.")
 
-    show_counts(cur, "DESPUES")
+    # POST_PROCESADOS → drop + recreate
+    print(f"Recreando tabla {POST_TABLE}...")
+
+    cur.execute(f"DROP TABLE IF EXISTS {POST_TABLE}")
+
+    # Se crea vacía (estructura mínima)
+    cur.execute(
+        f"""
+        CREATE TABLE {POST_TABLE} (
+            dummy INT NULL
+        )
+        """
+    )
+
+    print(f"Tabla {POST_TABLE} recreada vacía.")
+
+    show_counts(cur, RAW_TABLE, "DESPUES RAW")
+    show_counts(cur, POST_TABLE, "DESPUES POST")
 
     cur.close()
     conn.close()
 
 
 def load_penguins():
-    pretty_banner("TAREA 2: load_penguins (cargar penguins RAW, sin preprocesamiento)")
+    pretty_banner("TAREA 2: load_penguins RAW")
 
-    df = sns.load_dataset("penguins")  # viene con NaNs, así lo dejamos
-    print(f"Dataset penguins cargado en memoria: {df.shape[0]} filas, {df.shape[1]} columnas")
-    print("Primeras 3 filas (para verificar):")
-    print(df.head(3))
+    df = sns.load_dataset("penguins")
 
     conn = mysql_conn()
     cur = conn.cursor()
 
-    show_context(cur)
-    show_counts(cur, "ANTES DE CARGAR")
-
-    # crear tabla si no existe (tipos simples)
     cur.execute(
         f"""
         CREATE TABLE IF NOT EXISTS {RAW_TABLE} (
@@ -164,7 +134,6 @@ def load_penguins():
         """
     )
 
-    # Convertimos NaN a None para mysql-connector
     df2 = df.where(pd.notnull(df), None)
 
     rows = df2[
@@ -179,8 +148,6 @@ def load_penguins():
         ]
     ].values.tolist()
 
-    print(f"Insertando {len(rows)} filas en {RAW_TABLE} ...")
-
     cur.executemany(
         f"""
         INSERT INTO {RAW_TABLE}
@@ -190,18 +157,49 @@ def load_penguins():
         rows,
     )
 
-    print("Inserción terminada.")
-    show_counts(cur, "DESPUES DE CARGAR")
+    show_counts(cur, RAW_TABLE, "DESPUES CARGA RAW")
 
     cur.close()
     conn.close()
 
 
+def run_model_script():
+    pretty_banner("TAREA 3: Ejecutando modelo1.py")
+
+    conn = mysql_conn()
+    cur = conn.cursor()
+    show_counts(cur, RAW_TABLE, "ANTES RAW")
+    show_counts(cur, POST_TABLE, "ANTES POST")
+    cur.close()
+    conn.close()
+
+    try:
+        res = subprocess.run(
+            ["python", "/opt/airflow/scripts/modelo1.py"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        print("STDOUT modelo1.py:\n", res.stdout)
+        print("STDERR modelo1.py:\n", res.stderr)
+
+    except subprocess.CalledProcessError as e:
+        print(" FALLÓ modelo1.py")
+        print("STDOUT:\n", e.stdout)
+        print("STDERR:\n", e.stderr)
+        raise
+
+    conn = mysql_conn()
+    cur = conn.cursor()
+    show_counts(cur, POST_TABLE, "DESPUES POST")
+    cur.close()
+    conn.close()
+
 # =========================
 # DAG
 # =========================
 with DAG(
-    dag_id="dag_pipeline_penguins_raw",
+    dag_id="dag_pipeline_penguins_raw_postprocesado",
     start_date=datetime(2024, 1, 1),
     schedule=None,
     catchup=False,
@@ -210,5 +208,6 @@ with DAG(
 
     t1 = PythonOperator(task_id="wipe_db", python_callable=wipe_db)
     t2 = PythonOperator(task_id="load_penguins_raw", python_callable=load_penguins)
+    t3 = PythonOperator(task_id="run_modelo1", python_callable=run_model_script)
 
-    t1 >> t2
+    t1 >> t2 >> t3
