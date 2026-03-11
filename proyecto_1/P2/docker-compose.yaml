@@ -1,0 +1,10 @@
+services:
+  api:
+    build: .
+    container_name: fastapi
+    ports:
+      - '8080:80'
+    volumes:
+      - ./data:/data
+      - ./main.py:/main.py
+    restart: always
