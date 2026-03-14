@@ -1,0 +1,15 @@
+# Jupyter
+jupyterlab
+nbconvert
+ 
+# Machine Learning
+scikit-learn
+pandas
+numpy
+ 
+# Base de datos
+psycopg2-binary
+ 
+# MinIO / S3
+boto3
+ 

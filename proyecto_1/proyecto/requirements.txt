@@ -1,0 +1,6 @@
+scikit-learn
+pandas
+numpy
+requests
+boto3
+websocket-client

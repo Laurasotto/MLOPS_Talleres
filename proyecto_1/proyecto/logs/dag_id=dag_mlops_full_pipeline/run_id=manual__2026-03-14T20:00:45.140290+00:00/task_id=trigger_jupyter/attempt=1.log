@@ -1,0 +1,51 @@
+[2026-03-14T20:00:51.496+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.trigger_jupyter manual__2026-03-14T20:00:45.140290+00:00 [queued]>
+[2026-03-14T20:00:51.499+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.trigger_jupyter manual__2026-03-14T20:00:45.140290+00:00 [queued]>
+[2026-03-14T20:00:51.500+0000] {taskinstance.py:1331} INFO - Starting attempt 1 of 1
+[2026-03-14T20:00:51.505+0000] {taskinstance.py:1350} INFO - Executing <Task(PythonOperator): trigger_jupyter> on 2026-03-14 20:00:45.140290+00:00
+[2026-03-14T20:00:51.507+0000] {standard_task_runner.py:57} INFO - Started process 244 to run task
+[2026-03-14T20:00:51.509+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'dag_mlops_full_pipeline', 'trigger_jupyter', 'manual__2026-03-14T20:00:45.140290+00:00', '--job-id', '96', '--raw', '--subdir', 'DAGS_FOLDER/dag2.py', '--cfg-path', '/tmp/tmphbqpzln_']
+[2026-03-14T20:00:51.509+0000] {standard_task_runner.py:85} INFO - Job 96: Subtask trigger_jupyter
+[2026-03-14T20:00:51.527+0000] {task_command.py:410} INFO - Running <TaskInstance: dag_mlops_full_pipeline.trigger_jupyter manual__2026-03-14T20:00:45.140290+00:00 [running]> on host 806b7d0ca00f
+[2026-03-14T20:00:51.556+0000] {taskinstance.py:1570} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='dag_mlops_full_pipeline' AIRFLOW_CTX_TASK_ID='trigger_jupyter' AIRFLOW_CTX_EXECUTION_DATE='2026-03-14T20:00:45.140290+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-03-14T20:00:45.140290+00:00'
+[2026-03-14T20:00:51.561+0000] {logging_mixin.py:149} INFO - Creando kernel en Jupyter...
+[2026-03-14T20:00:51.589+0000] {logging_mixin.py:149} INFO - Kernel creado: 16aacd5c-000d-40f2-ba55-13fae76b44ce
+[2026-03-14T20:00:51.589+0000] {logging_mixin.py:149} INFO - Conectando WebSocket: ws://jupyter:8888/api/kernels/16aacd5c-000d-40f2-ba55-13fae76b44ce/channels?token=mlops_token
+[2026-03-14T20:00:51.776+0000] {logging_mixin.py:149} INFO - WebSocket conectado
+[2026-03-14T20:00:51.777+0000] {logging_mixin.py:149} INFO - Esperando que el kernel esté listo...
+[2026-03-14T20:00:51.796+0000] {logging_mixin.py:149} INFO -   Estado kernel: busy
+[2026-03-14T20:00:52.798+0000] {logging_mixin.py:149} INFO -   Estado kernel: busy
+[2026-03-14T20:00:53.802+0000] {logging_mixin.py:149} INFO -   Estado kernel: idle
+[2026-03-14T20:00:53.802+0000] {logging_mixin.py:149} INFO - Kernel listo
+[2026-03-14T20:00:53.802+0000] {logging_mixin.py:149} INFO - Leyendo notebook train_model.ipynb...
+[2026-03-14T20:00:53.832+0000] {logging_mixin.py:149} INFO - Enviando código al kernel (batch=2, group=4)...
+[2026-03-14T20:00:53.832+0000] {logging_mixin.py:149} INFO - Esperando que el notebook termine de ejecutarse...
+[2026-03-14T20:00:54.463+0000] {logging_mixin.py:149} INFO -   [ERROR] SyntaxError: unterminated string literal (detected at line 339) (4051891784.py, line 339)
+[2026-03-14T20:00:54.465+0000] {logging_mixin.py:149} INFO -   Ejecución terminada con status: error
+[2026-03-14T20:00:54.583+0000] {logging_mixin.py:149} INFO - Kernel 16aacd5c-000d-40f2-ba55-13fae76b44ce eliminado
+[2026-03-14T20:00:54.583+0000] {taskinstance.py:1847} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/python.py", line 181, in execute
+    return_value = self.execute_callable()
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/python.py", line 198, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+  File "/opt/airflow/dags/dag2.py", line 405, in trigger_jupyter
+    raise RuntimeError(f"El notebook falló con errores:\n" + "\n".join(errors))
+RuntimeError: El notebook falló con errores:
+SyntaxError: unterminated string literal (detected at line 339) (4051891784.py, line 339)
+  [36mCell[39m[36m [39m[32mIn[1][39m[32m, line 339[39m
+[31m    [39m[31m'[39m
+    ^
+[31mSyntaxError[39m[31m:[39m unterminated string literal (detected at line 339)
+
+execute_reply error: SyntaxError: unterminated string literal (detected at line 339) (4051891784.py, line 339)
+[2026-03-14T20:00:54.590+0000] {taskinstance.py:1373} INFO - Marking task as FAILED. dag_id=dag_mlops_full_pipeline, task_id=trigger_jupyter, execution_date=20260314T200045, start_date=20260314T200051, end_date=20260314T200054
+[2026-03-14T20:00:54.595+0000] {standard_task_runner.py:109} ERROR - Failed to execute job 96 for task trigger_jupyter (El notebook falló con errores:
+SyntaxError: unterminated string literal (detected at line 339) (4051891784.py, line 339)
+  [36mCell[39m[36m [39m[32mIn[1][39m[32m, line 339[39m
+[31m    [39m[31m'[39m
+    ^
+[31mSyntaxError[39m[31m:[39m unterminated string literal (detected at line 339)
+
+execute_reply error: SyntaxError: unterminated string literal (detected at line 339) (4051891784.py, line 339); 244)
+[2026-03-14T20:00:54.616+0000] {local_task_job_runner.py:232} INFO - Task exited with return code 1
+[2026-03-14T20:00:54.628+0000] {taskinstance.py:2674} INFO - 0 downstream tasks scheduled from follow-on schedule check

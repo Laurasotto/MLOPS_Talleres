@@ -1,0 +1,59 @@
+[2026-03-14T19:20:35.542+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.create_tables manual__2026-03-14T18:30:43.699328+00:00 [queued]>
+[2026-03-14T19:20:35.549+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.create_tables manual__2026-03-14T18:30:43.699328+00:00 [queued]>
+[2026-03-14T19:20:35.549+0000] {taskinstance.py:1331} INFO - Starting attempt 2 of 2
+[2026-03-14T19:20:35.561+0000] {taskinstance.py:1350} INFO - Executing <Task(PythonOperator): create_tables> on 2026-03-14 18:30:43.699328+00:00
+[2026-03-14T19:20:35.567+0000] {standard_task_runner.py:57} INFO - Started process 1089 to run task
+[2026-03-14T19:20:35.570+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'dag_mlops_full_pipeline', 'create_tables', 'manual__2026-03-14T18:30:43.699328+00:00', '--job-id', '68', '--raw', '--subdir', 'DAGS_FOLDER/dag2.py', '--cfg-path', '/tmp/tmpyke3tft5']
+[2026-03-14T19:20:35.572+0000] {standard_task_runner.py:85} INFO - Job 68: Subtask create_tables
+[2026-03-14T19:20:35.610+0000] {task_command.py:410} INFO - Running <TaskInstance: dag_mlops_full_pipeline.create_tables manual__2026-03-14T18:30:43.699328+00:00 [running]> on host 463b4b91a996
+[2026-03-14T19:20:35.668+0000] {taskinstance.py:1570} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='dag_mlops_full_pipeline' AIRFLOW_CTX_TASK_ID='create_tables' AIRFLOW_CTX_EXECUTION_DATE='2026-03-14T18:30:43.699328+00:00' AIRFLOW_CTX_TRY_NUMBER='2' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-03-14T18:30:43.699328+00:00'
+[2026-03-14T19:20:35.669+0000] {logging_mixin.py:149} INFO - Eliminando tablas anteriores si existen...
+[2026-03-14T19:20:35.676+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-14T19:20:35.678+0000] {sql.py:375} INFO - Running statement: DROP TABLE IF EXISTS public.training_data_processed;, parameters: None
+[2026-03-14T19:20:35.684+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-14T19:20:35.687+0000] {sql.py:375} INFO - Running statement: DROP TABLE IF EXISTS public.training_data;, parameters: None
+[2026-03-14T19:20:35.689+0000] {logging_mixin.py:149} INFO - Tablas eliminadas
+[2026-03-14T19:20:35.689+0000] {logging_mixin.py:149} INFO - Creando tablas nuevas...
+[2026-03-14T19:20:35.694+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-14T19:20:35.697+0000] {sql.py:375} INFO - Running statement: 
+    CREATE TABLE public.training_data (
+        id                                      SERIAL PRIMARY KEY,
+        group_number                            INTEGER,
+        batch_number                            INTEGER,
+        elevation                               INTEGER,
+        aspect                                  INTEGER,
+        slope                                   INTEGER,
+        horizontal_distance_to_hydrology        INTEGER,
+        vertical_distance_to_hydrology          INTEGER,
+        horizontal_distance_to_roadways         INTEGER,
+        hillshade_9am                           INTEGER,
+        hillshade_noon                          INTEGER,
+        hillshade_3pm                           INTEGER,
+        horizontal_distance_to_fire_points      INTEGER,
+        wilderness_area                         VARCHAR(100),
+        soil_type                               VARCHAR(100),
+        cover_type                              INTEGER,
+        inserted_at                             TIMESTAMP DEFAULT NOW()
+    );
+    , parameters: None
+[2026-03-14T19:20:35.700+0000] {taskinstance.py:1847} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/python.py", line 181, in execute
+    return_value = self.execute_callable()
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/python.py", line 198, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+  File "/opt/airflow/dags/dag2.py", line 94, in create_tables
+    hook.run(raw_sql)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/providers/common/sql/hooks/sql.py", line 349, in run
+    self._run_command(cur, sql_statement, parameters)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/providers/common/sql/hooks/sql.py", line 380, in _run_command
+    cur.execute(sql_statement)
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "pg_type_typname_nsp_index"
+DETAIL:  Key (typname, typnamespace)=(training_data, 2200) already exists.
+
+[2026-03-14T19:20:35.707+0000] {taskinstance.py:1373} INFO - Marking task as FAILED. dag_id=dag_mlops_full_pipeline, task_id=create_tables, execution_date=20260314T183043, start_date=20260314T192035, end_date=20260314T192035
+[2026-03-14T19:20:35.715+0000] {standard_task_runner.py:109} ERROR - Failed to execute job 68 for task create_tables (duplicate key value violates unique constraint "pg_type_typname_nsp_index"
+DETAIL:  Key (typname, typnamespace)=(training_data, 2200) already exists.
+; 1089)
+[2026-03-14T19:20:35.749+0000] {local_task_job_runner.py:232} INFO - Task exited with return code 1
+[2026-03-14T19:20:35.764+0000] {taskinstance.py:2674} INFO - 0 downstream tasks scheduled from follow-on schedule check

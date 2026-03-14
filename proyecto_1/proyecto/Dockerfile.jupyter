@@ -1,0 +1,18 @@
+FROM python:3.11-slim
+
+WORKDIR /home/jovyan/work
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar e instalar dependencias de Python
+COPY requirements.jupyter.txt /tmp/requirements.jupyter.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.jupyter.txt
+
+# Exponer puerto de Jupyter
+EXPOSE 8888
+
+# Comando por defecto: levantar Jupyter Lab
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=mlops_token"]

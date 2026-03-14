@@ -1,0 +1,60 @@
+[2026-03-14T19:13:55.109+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.trigger_jupyter manual__2026-03-14T19:13:49.575456+00:00 [queued]>
+[2026-03-14T19:13:55.112+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.trigger_jupyter manual__2026-03-14T19:13:49.575456+00:00 [queued]>
+[2026-03-14T19:13:55.112+0000] {taskinstance.py:1331} INFO - Starting attempt 1 of 1
+[2026-03-14T19:13:55.116+0000] {taskinstance.py:1350} INFO - Executing <Task(PythonOperator): trigger_jupyter> on 2026-03-14 19:13:49.575456+00:00
+[2026-03-14T19:13:55.119+0000] {standard_task_runner.py:57} INFO - Started process 664 to run task
+[2026-03-14T19:13:55.120+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'dag_mlops_full_pipeline', 'trigger_jupyter', 'manual__2026-03-14T19:13:49.575456+00:00', '--job-id', '64', '--raw', '--subdir', 'DAGS_FOLDER/dag2.py', '--cfg-path', '/tmp/tmpp5k2del8']
+[2026-03-14T19:13:55.121+0000] {standard_task_runner.py:85} INFO - Job 64: Subtask trigger_jupyter
+[2026-03-14T19:13:55.137+0000] {task_command.py:410} INFO - Running <TaskInstance: dag_mlops_full_pipeline.trigger_jupyter manual__2026-03-14T19:13:49.575456+00:00 [running]> on host 463b4b91a996
+[2026-03-14T19:13:55.166+0000] {taskinstance.py:1570} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='dag_mlops_full_pipeline' AIRFLOW_CTX_TASK_ID='trigger_jupyter' AIRFLOW_CTX_EXECUTION_DATE='2026-03-14T19:13:49.575456+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-03-14T19:13:49.575456+00:00'
+[2026-03-14T19:13:55.171+0000] {logging_mixin.py:149} INFO - Creando sesión de kernel en Jupyter para train_model.ipynb...
+[2026-03-14T19:13:55.191+0000] {logging_mixin.py:149} INFO - Kernel creado: 0e357931-f4cf-43a3-bf62-4df91e0afeb2
+[2026-03-14T19:13:55.216+0000] {logging_mixin.py:149} INFO - Ejecutando notebook con batch=10, group=4...
+[2026-03-14T19:13:55.225+0000] {logging_mixin.py:149} INFO - Esperando que el notebook termine...
+[2026-03-14T19:14:05.245+0000] {logging_mixin.py:149} INFO -   Estado del kernel (10s): starting
+[2026-03-14T19:14:15.249+0000] {logging_mixin.py:149} INFO -   Estado del kernel (20s): starting
+[2026-03-14T19:14:25.263+0000] {logging_mixin.py:149} INFO -   Estado del kernel (30s): starting
+[2026-03-14T19:14:35.280+0000] {logging_mixin.py:149} INFO -   Estado del kernel (40s): starting
+[2026-03-14T19:14:45.286+0000] {logging_mixin.py:149} INFO -   Estado del kernel (50s): starting
+[2026-03-14T19:14:55.302+0000] {logging_mixin.py:149} INFO -   Estado del kernel (60s): starting
+[2026-03-14T19:15:05.320+0000] {logging_mixin.py:149} INFO -   Estado del kernel (70s): starting
+[2026-03-14T19:15:15.346+0000] {logging_mixin.py:149} INFO -   Estado del kernel (80s): starting
+[2026-03-14T19:15:25.350+0000] {logging_mixin.py:149} INFO -   Estado del kernel (90s): starting
+[2026-03-14T19:15:35.364+0000] {logging_mixin.py:149} INFO -   Estado del kernel (100s): starting
+[2026-03-14T19:15:45.377+0000] {logging_mixin.py:149} INFO -   Estado del kernel (110s): starting
+[2026-03-14T19:15:55.396+0000] {logging_mixin.py:149} INFO -   Estado del kernel (120s): starting
+[2026-03-14T19:16:05.416+0000] {logging_mixin.py:149} INFO -   Estado del kernel (130s): starting
+[2026-03-14T19:16:15.439+0000] {logging_mixin.py:149} INFO -   Estado del kernel (140s): starting
+[2026-03-14T19:16:25.462+0000] {logging_mixin.py:149} INFO -   Estado del kernel (150s): starting
+[2026-03-14T19:16:35.475+0000] {logging_mixin.py:149} INFO -   Estado del kernel (160s): starting
+[2026-03-14T19:16:45.497+0000] {logging_mixin.py:149} INFO -   Estado del kernel (170s): starting
+[2026-03-14T19:16:55.503+0000] {logging_mixin.py:149} INFO -   Estado del kernel (180s): starting
+[2026-03-14T19:17:05.517+0000] {logging_mixin.py:149} INFO -   Estado del kernel (190s): starting
+[2026-03-14T19:17:15.530+0000] {logging_mixin.py:149} INFO -   Estado del kernel (200s): starting
+[2026-03-14T19:17:25.552+0000] {logging_mixin.py:149} INFO -   Estado del kernel (210s): starting
+[2026-03-14T19:17:35.568+0000] {logging_mixin.py:149} INFO -   Estado del kernel (220s): starting
+[2026-03-14T19:17:45.595+0000] {logging_mixin.py:149} INFO -   Estado del kernel (230s): starting
+[2026-03-14T19:17:55.615+0000] {logging_mixin.py:149} INFO -   Estado del kernel (240s): starting
+[2026-03-14T19:18:05.630+0000] {logging_mixin.py:149} INFO -   Estado del kernel (250s): starting
+[2026-03-14T19:18:15.648+0000] {logging_mixin.py:149} INFO -   Estado del kernel (260s): starting
+[2026-03-14T19:18:25.664+0000] {logging_mixin.py:149} INFO -   Estado del kernel (270s): starting
+[2026-03-14T19:18:35.683+0000] {logging_mixin.py:149} INFO -   Estado del kernel (280s): starting
+[2026-03-14T19:18:45.704+0000] {logging_mixin.py:149} INFO -   Estado del kernel (290s): starting
+[2026-03-14T19:18:55.727+0000] {logging_mixin.py:149} INFO -   Estado del kernel (300s): starting
+[2026-03-14T19:19:05.733+0000] {logging_mixin.py:149} INFO -   Estado del kernel (310s): starting
+[2026-03-14T19:19:15.752+0000] {logging_mixin.py:149} INFO -   Estado del kernel (320s): starting
+[2026-03-14T19:19:25.779+0000] {logging_mixin.py:149} INFO -   Estado del kernel (330s): starting
+[2026-03-14T19:19:35.790+0000] {logging_mixin.py:149} INFO -   Estado del kernel (340s): starting
+[2026-03-14T19:19:45.809+0000] {logging_mixin.py:149} INFO -   Estado del kernel (350s): starting
+[2026-03-14T19:19:55.823+0000] {logging_mixin.py:149} INFO -   Estado del kernel (360s): starting
+[2026-03-14T19:20:05.842+0000] {logging_mixin.py:149} INFO -   Estado del kernel (370s): starting
+[2026-03-14T19:20:15.863+0000] {logging_mixin.py:149} INFO -   Estado del kernel (380s): starting
+[2026-03-14T19:20:25.879+0000] {logging_mixin.py:149} INFO -   Estado del kernel (390s): starting
+[2026-03-14T19:20:35.898+0000] {logging_mixin.py:149} INFO -   Estado del kernel (400s): starting
+[2026-03-14T19:20:42.997+0000] {local_task_job_runner.py:299} WARNING - State of this instance has been externally set to upstream_failed. Terminating instance.
+[2026-03-14T19:20:42.999+0000] {process_utils.py:135} INFO - Sending Signals.SIGTERM to group 664. PIDs of all processes in the group: [664]
+[2026-03-14T19:20:42.999+0000] {process_utils.py:86} INFO - Sending the signal Signals.SIGTERM to group 664
+[2026-03-14T19:20:42.999+0000] {taskinstance.py:1540} ERROR - Received SIGTERM. Terminating subprocesses.
+[2026-03-14T19:20:43.000+0000] {logging_mixin.py:149} INFO - Cerrando sesión d88feedc-f463-43b5-9221-653323d29ef8...
+[2026-03-14T19:20:43.115+0000] {logging_mixin.py:149} INFO - Sesión cerrada
+[2026-03-14T19:20:43.139+0000] {process_utils.py:79} INFO - Process psutil.Process(pid=664, status='terminated', exitcode=0, started='19:13:54') (664) terminated with exit code 0
