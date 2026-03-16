@@ -13,11 +13,12 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# CONFIGURACIÓN GENERAL
+# CONFIGURACION GENERAL
 # ──────────────────────────────────────────────────────────────────────────────
 POSTGRES_CONN_ID  = "postgres_default"
-TABLE_NAME        = "training_data"
-PROCESSED_TABLE   = "training_data_processed"
+TABLE_NAME        = "training_data"           # Etapa 1: datos crudos de la API
+PROCESSED_TABLE   = "training_data_processed" # Etapa 2: datos normalizados y encoded
+READY_TABLE       = "training_data_ready"     # Etapa 3: datos listos para entrenar (sin metadatos)
 API_BASE_URL      = "http://host.docker.internal:8080/data"
 GROUP_NUMBER      = 4
 
@@ -34,16 +35,28 @@ MINIO_BUCKET      = "models"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAREA 1: create_tables
-# Borra y recrea las tablas en cada ejecución para empezar desde cero.
+# Borra y recrea las TRES tablas en cada ejecucion para empezar desde cero.
+#
+# Las tres etapas de datos en PostgreSQL:
+#   - training_data:           datos crudos tal como vienen de la API
+#   - training_data_processed: datos normalizados y con variables categoricas encoded
+#   - training_data_ready:     datos listos para entrenar, sin metadatos de pipeline
+#                              (sin group_number, batch_number, inserted_at)
+#
+# El orden del DROP importa: primero las tablas dependientes, luego la base.
 # ══════════════════════════════════════════════════════════════════════════════
 def create_tables():
     hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
 
     print("Eliminando tablas anteriores si existen...")
+    hook.run(f"DROP TABLE IF EXISTS public.{READY_TABLE};")
     hook.run(f"DROP TABLE IF EXISTS public.{PROCESSED_TABLE};")
     hook.run(f"DROP TABLE IF EXISTS public.{TABLE_NAME};")
     print("Tablas eliminadas")
 
+    # ── Etapa 1: datos crudos ─────────────────────────────────────────────
+    # Guarda exactamente lo que devuelve la API, sin ninguna transformacion.
+    # wilderness_area y soil_type se guardan como texto (VARCHAR).
     raw_sql = f"""
     CREATE TABLE public.{TABLE_NAME} (
         id                                      SERIAL PRIMARY KEY,
@@ -66,6 +79,11 @@ def create_tables():
     );
     """
 
+    # ── Etapa 2: datos procesados ─────────────────────────────────────────
+    # Mismas columnas pero transformadas:
+    #   - Numeros normalizados al rango [0,1] con Min-Max
+    #   - wilderness_area y soil_type convertidos a enteros (Label Encoding)
+    # Todavia incluye metadatos de pipeline (group_number, batch_number).
     processed_sql = f"""
     CREATE TABLE public.{PROCESSED_TABLE} (
         id                                      SERIAL PRIMARY KEY,
@@ -88,15 +106,43 @@ def create_tables():
     );
     """
 
+    # ── Etapa 3: datos listos para entrenamiento ──────────────────────────
+    # Solo contiene las columnas que el modelo necesita para entrenar.
+    # Se eliminan los metadatos de pipeline: group_number, batch_number,
+    # inserted_at. Esta es la tabla que el notebook de Jupyter lee para
+    # entrenar el modelo directamente.
+    ready_sql = f"""
+    CREATE TABLE public.{READY_TABLE} (
+        id                                      SERIAL PRIMARY KEY,
+        elevation                               FLOAT,
+        aspect                                  FLOAT,
+        slope                                   FLOAT,
+        horizontal_distance_to_hydrology        FLOAT,
+        vertical_distance_to_hydrology          FLOAT,
+        horizontal_distance_to_roadways         FLOAT,
+        hillshade_9am                           FLOAT,
+        hillshade_noon                          FLOAT,
+        hillshade_3pm                           FLOAT,
+        horizontal_distance_to_fire_points      FLOAT,
+        wilderness_area_encoded                 INTEGER,
+        soil_type_encoded                       INTEGER,
+        cover_type                              INTEGER
+    );
+    """
+
     print("Creando tablas nuevas...")
     hook.run(raw_sql)
     hook.run(processed_sql)
-    print("Tablas creadas y listas")
+    hook.run(ready_sql)
+    print("Tres tablas creadas y listas")
+    print(f"  - {TABLE_NAME}:     datos crudos")
+    print(f"  - {PROCESSED_TABLE}: datos procesados")
+    print(f"  - {READY_TABLE}:      datos listos para entrenar")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAREA 2: get_api_data
-# Llama a la API externa y guarda los datos crudos en PostgreSQL.
+# Llama a la API externa y guarda los datos crudos en training_data.
 # ══════════════════════════════════════════════════════════════════════════════
 def get_api_data(**context):
     hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
@@ -162,7 +208,9 @@ def get_api_data(**context):
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAREA 3: preprocess_data
-# Lee el batch recien insertado, aplica Label Encoding y normalizacion Min-Max.
+# Lee los datos crudos, aplica transformaciones y los guarda en DOS tablas:
+#   - training_data_processed: con metadatos (group_number, batch_number)
+#   - training_data_ready:     sin metadatos, lista para entrenar
 # ══════════════════════════════════════════════════════════════════════════════
 def preprocess_data(**context):
     batch_number = context["ti"].xcom_pull(key="batch_number", task_ids="get_api_data")
@@ -202,11 +250,13 @@ def preprocess_data(**context):
         df = pd.DataFrame(rows, columns=columns)
         print(f"Filas a procesar: {len(df)}")
 
+        # Label Encoding: texto a numero entero
         le_wilderness = LabelEncoder()
         le_soil       = LabelEncoder()
         df["wilderness_area_encoded"] = le_wilderness.fit_transform(df["wilderness_area"])
         df["soil_type_encoded"]       = le_soil.fit_transform(df["soil_type"])
 
+        # Normalizacion Min-Max: escala cada columna al rango [0, 1]
         numeric_cols = [
             "elevation", "aspect", "slope",
             "horizontal_distance_to_hydrology", "vertical_distance_to_hydrology",
@@ -219,6 +269,7 @@ def preprocess_data(**context):
             col_max = df[col].max()
             df[col] = (df[col] - col_min) / (col_max - col_min + 1e-8)
 
+        # ── Insertar en training_data_processed (con metadatos) ───────────
         insert_processed = f"""
         INSERT INTO public.{PROCESSED_TABLE} (
             group_number, batch_number,
@@ -235,7 +286,28 @@ def preprocess_data(**context):
         )
         """
 
+        # ── Insertar en training_data_ready (sin metadatos) ───────────────
+        # Esta tabla es la entrada directa al entrenamiento del modelo.
+        # No incluye group_number, batch_number ni inserted_at porque
+        # esos campos no son features del modelo — son solo metadatos
+        # de como se recolecto el dato.
+        insert_ready = f"""
+        INSERT INTO public.{READY_TABLE} (
+            elevation, aspect, slope,
+            horizontal_distance_to_hydrology, vertical_distance_to_hydrology,
+            horizontal_distance_to_roadways,
+            hillshade_9am, hillshade_noon, hillshade_3pm,
+            horizontal_distance_to_fire_points,
+            wilderness_area_encoded, soil_type_encoded, cover_type
+        ) VALUES (
+            %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s,
+            %s, %s, %s
+        )
+        """
+
         for _, row in df.iterrows():
+            # Insertar en tabla procesada (con metadatos)
             cur.execute(insert_processed, (
                 int(row["group_number"]), int(row["batch_number"]),
                 float(row["elevation"]), float(row["aspect"]), float(row["slope"]),
@@ -250,8 +322,24 @@ def preprocess_data(**context):
                 int(row["cover_type"])
             ))
 
+            # Insertar en tabla lista para entrenar (sin metadatos)
+            cur.execute(insert_ready, (
+                float(row["elevation"]), float(row["aspect"]), float(row["slope"]),
+                float(row["horizontal_distance_to_hydrology"]),
+                float(row["vertical_distance_to_hydrology"]),
+                float(row["horizontal_distance_to_roadways"]),
+                float(row["hillshade_9am"]), float(row["hillshade_noon"]),
+                float(row["hillshade_3pm"]),
+                float(row["horizontal_distance_to_fire_points"]),
+                int(row["wilderness_area_encoded"]),
+                int(row["soil_type_encoded"]),
+                int(row["cover_type"])
+            ))
+
         conn.commit()
-        print(f"Preprocesamiento completado: {len(df)} filas en {PROCESSED_TABLE}")
+        print(f"Preprocesamiento completado: {len(df)} filas")
+        print(f"  - Insertadas en {PROCESSED_TABLE}")
+        print(f"  - Insertadas en {READY_TABLE}")
 
     finally:
         cur.close()
@@ -272,8 +360,8 @@ def preprocess_data(**context):
 #      CAMBIO: En vez de concatenar todas las celdas en un solo string
 #      (causaba SyntaxError por caracteres especiales en los comentarios),
 #      ahora se ejecuta cada celda por separado esperando que termine
-#      antes de enviar la siguiente. Ademas, se maneja correctamente
-#      el caso en que source es lista o string.
+#      antes de enviar la siguiente. Ademas, cell["source"] puede ser string
+#      o lista de strings, por eso se usa isinstance para manejarlo.
 #   G) Cerrar WebSocket y eliminar kernel
 # ══════════════════════════════════════════════════════════════════════════════
 def trigger_jupyter(**context):
