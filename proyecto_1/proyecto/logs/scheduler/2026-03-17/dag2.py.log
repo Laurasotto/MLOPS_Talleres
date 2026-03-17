@@ -1,0 +1,28 @@
+[2026-03-17T00:00:10.907+0000] {processor.py:156} INFO - Started process (PID=47875) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T00:00:10.909+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T00:00:10.910+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:00:10.910+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T00:00:11.218+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T00:00:11.227+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:00:11.227+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T00:00:11.236+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:00:11.236+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-16T23:54:00+00:00, run_after=2026-03-17T00:00:00+00:00
+[2026-03-17T00:00:11.241+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.336 seconds
+[2026-03-17T00:00:42.225+0000] {processor.py:156} INFO - Started process (PID=47907) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T00:00:42.226+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T00:00:42.226+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:00:42.226+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T00:00:42.545+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T00:00:42.555+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:00:42.554+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T00:00:42.565+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:00:42.564+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-16T23:54:00+00:00, run_after=2026-03-17T00:00:00+00:00
+[2026-03-17T00:00:42.570+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.349 seconds
+[2026-03-17T00:01:12.606+0000] {processor.py:156} INFO - Started process (PID=47939) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T00:01:12.606+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T00:01:12.607+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:01:12.607+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T00:01:12.900+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T00:01:12.909+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:01:12.909+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T00:01:12.918+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:01:12.918+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-16T23:54:00+00:00, run_after=2026-03-17T00:00:00+00:00
+[2026-03-17T00:01:12.924+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.322 seconds
+[2026-03-17T00:01:42.948+0000] {processor.py:156} INFO - Started process (PID=47971) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T00:01:42.948+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T00:01:42.949+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:01:42.948+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T00:01:43.233+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T00:01:43.242+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:01:43.242+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T00:01:43.251+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:01:43.251+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-16T23:54:00+00:00, run_after=2026-03-17T00:00:00+00:00
+[2026-03-17T00:01:43.257+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.312 seconds

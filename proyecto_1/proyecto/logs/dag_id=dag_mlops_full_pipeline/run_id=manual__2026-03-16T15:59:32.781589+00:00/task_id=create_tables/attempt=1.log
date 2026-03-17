@@ -1,0 +1,89 @@
+[2026-03-16T15:59:34.230+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.create_tables manual__2026-03-16T15:59:32.781589+00:00 [queued]>
+[2026-03-16T15:59:34.232+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.create_tables manual__2026-03-16T15:59:32.781589+00:00 [queued]>
+[2026-03-16T15:59:34.232+0000] {taskinstance.py:1331} INFO - Starting attempt 1 of 1
+[2026-03-16T15:59:34.237+0000] {taskinstance.py:1350} INFO - Executing <Task(PythonOperator): create_tables> on 2026-03-16 15:59:32.781589+00:00
+[2026-03-16T15:59:34.240+0000] {standard_task_runner.py:57} INFO - Started process 12940 to run task
+[2026-03-16T15:59:34.241+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'dag_mlops_full_pipeline', 'create_tables', 'manual__2026-03-16T15:59:32.781589+00:00', '--job-id', '126', '--raw', '--subdir', 'DAGS_FOLDER/dag2.py', '--cfg-path', '/tmp/tmp12y5v1z_']
+[2026-03-16T15:59:34.242+0000] {standard_task_runner.py:85} INFO - Job 126: Subtask create_tables
+[2026-03-16T15:59:34.260+0000] {task_command.py:410} INFO - Running <TaskInstance: dag_mlops_full_pipeline.create_tables manual__2026-03-16T15:59:32.781589+00:00 [running]> on host 87aa27980d8e
+[2026-03-16T15:59:34.290+0000] {taskinstance.py:1570} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='dag_mlops_full_pipeline' AIRFLOW_CTX_TASK_ID='create_tables' AIRFLOW_CTX_EXECUTION_DATE='2026-03-16T15:59:32.781589+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-03-16T15:59:32.781589+00:00'
+[2026-03-16T15:59:34.291+0000] {logging_mixin.py:149} INFO - Eliminando tablas anteriores si existen...
+[2026-03-16T15:59:34.294+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-16T15:59:34.295+0000] {sql.py:375} INFO - Running statement: DROP TABLE IF EXISTS public.training_data_ready;, parameters: None
+[2026-03-16T15:59:34.297+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-16T15:59:34.298+0000] {sql.py:375} INFO - Running statement: DROP TABLE IF EXISTS public.training_data_processed;, parameters: None
+[2026-03-16T15:59:34.301+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-16T15:59:34.302+0000] {sql.py:375} INFO - Running statement: DROP TABLE IF EXISTS public.training_data;, parameters: None
+[2026-03-16T15:59:34.303+0000] {logging_mixin.py:149} INFO - Tablas eliminadas
+[2026-03-16T15:59:34.303+0000] {logging_mixin.py:149} INFO - Creando tablas nuevas...
+[2026-03-16T15:59:34.305+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-16T15:59:34.306+0000] {sql.py:375} INFO - Running statement: 
+    CREATE TABLE public.training_data (
+        id                                      SERIAL PRIMARY KEY,
+        group_number                            INTEGER,
+        batch_number                            INTEGER,
+        elevation                               INTEGER,
+        aspect                                  INTEGER,
+        slope                                   INTEGER,
+        horizontal_distance_to_hydrology        INTEGER,
+        vertical_distance_to_hydrology          INTEGER,
+        horizontal_distance_to_roadways         INTEGER,
+        hillshade_9am                           INTEGER,
+        hillshade_noon                          INTEGER,
+        hillshade_3pm                           INTEGER,
+        horizontal_distance_to_fire_points      INTEGER,
+        wilderness_area                         VARCHAR(100),
+        soil_type                               VARCHAR(100),
+        cover_type                              INTEGER,
+        inserted_at                             TIMESTAMP DEFAULT NOW()
+    );
+    , parameters: None
+[2026-03-16T15:59:34.313+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-16T15:59:34.314+0000] {sql.py:375} INFO - Running statement: 
+    CREATE TABLE public.training_data_processed (
+        id                                      SERIAL PRIMARY KEY,
+        group_number                            INTEGER,
+        batch_number                            INTEGER,
+        elevation                               FLOAT,
+        aspect                                  FLOAT,
+        slope                                   FLOAT,
+        horizontal_distance_to_hydrology        FLOAT,
+        vertical_distance_to_hydrology          FLOAT,
+        horizontal_distance_to_roadways         FLOAT,
+        hillshade_9am                           FLOAT,
+        hillshade_noon                          FLOAT,
+        hillshade_3pm                           FLOAT,
+        horizontal_distance_to_fire_points      FLOAT,
+        wilderness_area_encoded                 INTEGER,
+        soil_type_encoded                       INTEGER,
+        cover_type                              INTEGER,
+        inserted_at                             TIMESTAMP DEFAULT NOW()
+    );
+    , parameters: None
+[2026-03-16T15:59:34.317+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-16T15:59:34.318+0000] {sql.py:375} INFO - Running statement: 
+    CREATE TABLE public.training_data_ready (
+        id                                      SERIAL PRIMARY KEY,
+        elevation                               FLOAT,
+        aspect                                  FLOAT,
+        slope                                   FLOAT,
+        horizontal_distance_to_hydrology        FLOAT,
+        vertical_distance_to_hydrology          FLOAT,
+        horizontal_distance_to_roadways         FLOAT,
+        hillshade_9am                           FLOAT,
+        hillshade_noon                          FLOAT,
+        hillshade_3pm                           FLOAT,
+        horizontal_distance_to_fire_points      FLOAT,
+        wilderness_area_encoded                 INTEGER,
+        soil_type_encoded                       INTEGER,
+        cover_type                              INTEGER
+    );
+    , parameters: None
+[2026-03-16T15:59:34.319+0000] {logging_mixin.py:149} INFO - Tres tablas creadas y listas
+[2026-03-16T15:59:34.319+0000] {logging_mixin.py:149} INFO -   - training_data:     datos crudos
+[2026-03-16T15:59:34.320+0000] {logging_mixin.py:149} INFO -   - training_data_processed: datos procesados
+[2026-03-16T15:59:34.320+0000] {logging_mixin.py:149} INFO -   - training_data_ready:      datos listos para entrenar
+[2026-03-16T15:59:34.320+0000] {python.py:183} INFO - Done. Returned value was: None
+[2026-03-16T15:59:34.323+0000] {taskinstance.py:1373} INFO - Marking task as SUCCESS. dag_id=dag_mlops_full_pipeline, task_id=create_tables, execution_date=20260316T155932, start_date=20260316T155934, end_date=20260316T155934
+[2026-03-16T15:59:34.343+0000] {local_task_job_runner.py:232} INFO - Task exited with return code 0
+[2026-03-16T15:59:34.356+0000] {taskinstance.py:2674} INFO - 0 downstream tasks scheduled from follow-on schedule check

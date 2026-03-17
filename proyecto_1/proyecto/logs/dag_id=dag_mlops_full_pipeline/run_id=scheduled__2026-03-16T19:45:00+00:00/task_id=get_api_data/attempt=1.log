@@ -1,0 +1,18 @@
+[2026-03-16T19:50:02.495+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.get_api_data scheduled__2026-03-16T19:45:00+00:00 [queued]>
+[2026-03-16T19:50:02.498+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.get_api_data scheduled__2026-03-16T19:45:00+00:00 [queued]>
+[2026-03-16T19:50:02.498+0000] {taskinstance.py:1331} INFO - Starting attempt 1 of 1
+[2026-03-16T19:50:02.502+0000] {taskinstance.py:1350} INFO - Executing <Task(PythonOperator): get_api_data> on 2026-03-16 19:45:00+00:00
+[2026-03-16T19:50:02.504+0000] {standard_task_runner.py:57} INFO - Started process 30294 to run task
+[2026-03-16T19:50:02.506+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'dag_mlops_full_pipeline', 'get_api_data', 'scheduled__2026-03-16T19:45:00+00:00', '--job-id', '385', '--raw', '--subdir', 'DAGS_FOLDER/dag2.py', '--cfg-path', '/tmp/tmpztnvmfun']
+[2026-03-16T19:50:02.507+0000] {standard_task_runner.py:85} INFO - Job 385: Subtask get_api_data
+[2026-03-16T19:50:02.523+0000] {task_command.py:410} INFO - Running <TaskInstance: dag_mlops_full_pipeline.get_api_data scheduled__2026-03-16T19:45:00+00:00 [running]> on host 87aa27980d8e
+[2026-03-16T19:50:02.552+0000] {taskinstance.py:1570} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='dag_mlops_full_pipeline' AIRFLOW_CTX_TASK_ID='get_api_data' AIRFLOW_CTX_EXECUTION_DATE='2026-03-16T19:45:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-03-16T19:45:00+00:00'
+[2026-03-16T19:50:02.554+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-16T19:50:02.555+0000] {logging_mixin.py:149} INFO - Llamando API: http://host.docker.internal:8080/data | group_number=4
+[2026-03-16T19:50:02.575+0000] {logging_mixin.py:149} INFO - Recibido: group=4, batch=4, filas=5810
+[2026-03-16T19:50:02.888+0000] {logging_mixin.py:149} INFO - Insercion completada
+[2026-03-16T19:50:02.890+0000] {logging_mixin.py:149} INFO - Total filas en training_data: 34860
+[2026-03-16T19:50:02.898+0000] {python.py:183} INFO - Done. Returned value was: None
+[2026-03-16T19:50:02.902+0000] {taskinstance.py:1373} INFO - Marking task as SUCCESS. dag_id=dag_mlops_full_pipeline, task_id=get_api_data, execution_date=20260316T194500, start_date=20260316T195002, end_date=20260316T195002
+[2026-03-16T19:50:02.909+0000] {local_task_job_runner.py:232} INFO - Task exited with return code 0
+[2026-03-16T19:50:02.920+0000] {taskinstance.py:2674} INFO - 1 downstream tasks scheduled from follow-on schedule check

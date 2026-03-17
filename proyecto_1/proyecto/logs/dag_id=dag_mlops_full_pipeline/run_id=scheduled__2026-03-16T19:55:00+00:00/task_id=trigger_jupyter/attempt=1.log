@@ -1,0 +1,81 @@
+[2026-03-16T20:00:04.384+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.trigger_jupyter scheduled__2026-03-16T19:55:00+00:00 [queued]>
+[2026-03-16T20:00:04.387+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.trigger_jupyter scheduled__2026-03-16T19:55:00+00:00 [queued]>
+[2026-03-16T20:00:04.387+0000] {taskinstance.py:1331} INFO - Starting attempt 1 of 1
+[2026-03-16T20:00:04.392+0000] {taskinstance.py:1350} INFO - Executing <Task(PythonOperator): trigger_jupyter> on 2026-03-16 19:55:00+00:00
+[2026-03-16T20:00:04.394+0000] {standard_task_runner.py:57} INFO - Started process 31061 to run task
+[2026-03-16T20:00:04.396+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'dag_mlops_full_pipeline', 'trigger_jupyter', 'scheduled__2026-03-16T19:55:00+00:00', '--job-id', '397', '--raw', '--subdir', 'DAGS_FOLDER/dag2.py', '--cfg-path', '/tmp/tmp48o2xhcc']
+[2026-03-16T20:00:04.396+0000] {standard_task_runner.py:85} INFO - Job 397: Subtask trigger_jupyter
+[2026-03-16T20:00:04.414+0000] {task_command.py:410} INFO - Running <TaskInstance: dag_mlops_full_pipeline.trigger_jupyter scheduled__2026-03-16T19:55:00+00:00 [running]> on host 87aa27980d8e
+[2026-03-16T20:00:04.444+0000] {taskinstance.py:1570} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='dag_mlops_full_pipeline' AIRFLOW_CTX_TASK_ID='trigger_jupyter' AIRFLOW_CTX_EXECUTION_DATE='2026-03-16T19:55:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-03-16T19:55:00+00:00'
+[2026-03-16T20:00:04.449+0000] {logging_mixin.py:149} INFO - Creando kernel en Jupyter...
+[2026-03-16T20:00:04.466+0000] {logging_mixin.py:149} INFO - Kernel creado: 45bdf5fe-19a2-491a-8fe2-a6a54d545112
+[2026-03-16T20:00:04.466+0000] {logging_mixin.py:149} INFO - Conectando WebSocket...
+[2026-03-16T20:00:04.666+0000] {logging_mixin.py:149} INFO - WebSocket conectado
+[2026-03-16T20:00:04.666+0000] {logging_mixin.py:149} INFO - Esperando que el kernel este listo...
+[2026-03-16T20:00:04.676+0000] {logging_mixin.py:149} INFO -   Estado kernel: busy
+[2026-03-16T20:00:05.683+0000] {logging_mixin.py:149} INFO -   Estado kernel: idle
+[2026-03-16T20:00:05.684+0000] {logging_mixin.py:149} INFO - Kernel listo
+[2026-03-16T20:00:05.685+0000] {logging_mixin.py:149} INFO - Leyendo notebook train_model.ipynb...
+[2026-03-16T20:00:05.698+0000] {logging_mixin.py:149} INFO - Inyectando parametros...
+[2026-03-16T20:00:05.707+0000] {logging_mixin.py:149} INFO -   [celda 0] Parametros inyectados: batch=5, group=4
+[2026-03-16T20:00:05.708+0000] {logging_mixin.py:149} INFO - Ejecutando 6 celdas del notebook...
+[2026-03-16T20:00:05.708+0000] {logging_mixin.py:149} INFO -   Ejecutando celda 1/6...
+[2026-03-16T20:00:06.196+0000] {logging_mixin.py:149} INFO -   [celda 1] Librerias cargadas correctamente
+[2026-03-16T20:00:06.197+0000] {logging_mixin.py:149} INFO -   Ejecutando celda 2/6...
+[2026-03-16T20:00:06.201+0000] {logging_mixin.py:149} INFO -   [celda 2] Parametros: batch=5, group=4
+[2026-03-16T20:00:06.201+0000] {logging_mixin.py:149} INFO -   Ejecutando celda 3/6...
+[2026-03-16T20:00:06.225+0000] {logging_mixin.py:149} INFO -   [celda 3] Conectando a PostgreSQL en postgres:5432...
+Datos cargados: 5810 filas
+   elevation    aspect     slope  horizontal_distance_to_hydrology  \
+0   0.721406  0.997222  0.250000                          0.168161   
+1   0.870288  0.141667  0.312500                          0.196188   
+2   0.896486  0.450000  0.250000                          0.587444   
+3   0.214696  0.947222  0.500000                          0.000000   
+4   0.794249  0.852778  0.395833                          0.337444   
+
+   vertical_distance_to_hydrology  horizontal_distance_to_roadways  \
+0                        0.312268                         0.207036   
+1                        0.269517                         0.787139   
+2                        0.447955                         0.343267   
+3                        0.265799                         0.090074   
+4                        0.306691                         0.285906   
+
+   hillshade_9am  hillshade_noon  hillshade_3pm  \
+0       0.729167        0.755102       0.614458   
+1       0.854167        0.680272       0.445783   
+2       0.885417        0.925170       0.566265   
+3       0.526042        0.612245       0.674699   
+4       0.536458        0.802721       0.799197   
+
+   horizontal_distance_to_fire_points  wilderness_area_encoded  \
+0                            0.449511                        1   
+1                            0.828525                        2   
+2                            0.523965                        2   
+3                            0.279200                        0   
+4                            0.674500                        2   
+
+   soil_type_encoded  cover_type  
+0                 22           1  
+1                 25           6  
+2                 26           0  
+3                 11           2  
+4                 20           0
+[2026-03-16T20:00:06.225+0000] {logging_mixin.py:149} INFO -   [celda 3] /tmp/ipykernel_3343/3056758113.py:26: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(query, conn, params=(BATCH_NUMBER, GROUP_NUMBER))
+[2026-03-16T20:00:06.226+0000] {logging_mixin.py:149} INFO -   Ejecutando celda 4/6...
+[2026-03-16T20:00:06.232+0000] {logging_mixin.py:149} INFO -   [celda 4] Train: 4648 filas | Test: 1162 filas
+[2026-03-16T20:00:06.232+0000] {logging_mixin.py:149} INFO -   Ejecutando celda 5/6...
+[2026-03-16T20:00:06.386+0000] {logging_mixin.py:149} INFO -   [celda 5] Entrenando Random Forest...
+Entrenamiento completado
+Accuracy en test: 0.8683 (86.83%)
+[2026-03-16T20:00:06.388+0000] {logging_mixin.py:149} INFO -   Ejecutando celda 6/6...
+[2026-03-16T20:00:06.434+0000] {logging_mixin.py:149} INFO -   [celda 6] Conectando a MinIO en http://minio:9000...
+[2026-03-16T20:00:06.483+0000] {logging_mixin.py:149} INFO -   [celda 6] Modelo guardado en MinIO: s3://models/group_4/batch_5_acc_0.8683_20260316_200006.pkl
+Tamano: 12203.6 KB
+Notebook completado exitosamente
+[2026-03-16T20:00:06.485+0000] {logging_mixin.py:149} INFO - Todas las celdas ejecutadas exitosamente
+[2026-03-16T20:00:06.703+0000] {logging_mixin.py:149} INFO - Kernel 45bdf5fe-19a2-491a-8fe2-a6a54d545112 eliminado
+[2026-03-16T20:00:06.703+0000] {python.py:183} INFO - Done. Returned value was: None
+[2026-03-16T20:00:06.707+0000] {taskinstance.py:1373} INFO - Marking task as SUCCESS. dag_id=dag_mlops_full_pipeline, task_id=trigger_jupyter, execution_date=20260316T195500, start_date=20260316T200004, end_date=20260316T200006
+[2026-03-16T20:00:06.725+0000] {local_task_job_runner.py:232} INFO - Task exited with return code 0
+[2026-03-16T20:00:06.735+0000] {taskinstance.py:2674} INFO - 1 downstream tasks scheduled from follow-on schedule check

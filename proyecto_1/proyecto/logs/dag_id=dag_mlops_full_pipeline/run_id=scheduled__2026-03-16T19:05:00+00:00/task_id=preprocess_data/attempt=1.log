@@ -1,0 +1,32 @@
+[2026-03-16T19:10:02.666+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.preprocess_data scheduled__2026-03-16T19:05:00+00:00 [queued]>
+[2026-03-16T19:10:02.669+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.preprocess_data scheduled__2026-03-16T19:05:00+00:00 [queued]>
+[2026-03-16T19:10:02.669+0000] {taskinstance.py:1331} INFO - Starting attempt 1 of 1
+[2026-03-16T19:10:02.674+0000] {taskinstance.py:1350} INFO - Executing <Task(PythonOperator): preprocess_data> on 2026-03-16 19:05:00+00:00
+[2026-03-16T19:10:02.676+0000] {standard_task_runner.py:57} INFO - Started process 27237 to run task
+[2026-03-16T19:10:02.678+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'dag_mlops_full_pipeline', 'preprocess_data', 'scheduled__2026-03-16T19:05:00+00:00', '--job-id', '337', '--raw', '--subdir', 'DAGS_FOLDER/dag2.py', '--cfg-path', '/tmp/tmpiv58ifbp']
+[2026-03-16T19:10:02.678+0000] {standard_task_runner.py:85} INFO - Job 337: Subtask preprocess_data
+[2026-03-16T19:10:02.696+0000] {task_command.py:410} INFO - Running <TaskInstance: dag_mlops_full_pipeline.preprocess_data scheduled__2026-03-16T19:05:00+00:00 [running]> on host 87aa27980d8e
+[2026-03-16T19:10:02.726+0000] {taskinstance.py:1570} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='dag_mlops_full_pipeline' AIRFLOW_CTX_TASK_ID='preprocess_data' AIRFLOW_CTX_EXECUTION_DATE='2026-03-16T19:05:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-03-16T19:05:00+00:00'
+[2026-03-16T19:10:02.734+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-16T19:10:02.758+0000] {logging_mixin.py:149} INFO - Filas a procesar: 11620
+[2026-03-16T19:10:04.983+0000] {logging_mixin.py:149} INFO - Preprocesamiento completado: 11620 filas en ambas tablas
+[2026-03-16T19:10:04.985+0000] {python.py:183} INFO - Done. Returned value was: None
+[2026-03-16T19:10:04.988+0000] {taskinstance.py:1373} INFO - Marking task as SUCCESS. dag_id=dag_mlops_full_pipeline, task_id=preprocess_data, execution_date=20260316T190500, start_date=20260316T191002, end_date=20260316T191004
+[2026-03-16T19:10:05.024+0000] {local_task_job_runner.py:232} INFO - Task exited with return code 0
+[2026-03-16T19:10:05.036+0000] {taskinstance.py:2674} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2026-03-16T19:14:13.839+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.preprocess_data scheduled__2026-03-16T19:05:00+00:00 [queued]>
+[2026-03-16T19:14:13.842+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.preprocess_data scheduled__2026-03-16T19:05:00+00:00 [queued]>
+[2026-03-16T19:14:13.842+0000] {taskinstance.py:1331} INFO - Starting attempt 1 of 1
+[2026-03-16T19:14:13.846+0000] {taskinstance.py:1350} INFO - Executing <Task(PythonOperator): preprocess_data> on 2026-03-16 19:05:00+00:00
+[2026-03-16T19:14:13.849+0000] {standard_task_runner.py:57} INFO - Started process 27562 to run task
+[2026-03-16T19:14:13.850+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'dag_mlops_full_pipeline', 'preprocess_data', 'scheduled__2026-03-16T19:05:00+00:00', '--job-id', '344', '--raw', '--subdir', 'DAGS_FOLDER/dag2.py', '--cfg-path', '/tmp/tmp1fyu37p1']
+[2026-03-16T19:14:13.851+0000] {standard_task_runner.py:85} INFO - Job 344: Subtask preprocess_data
+[2026-03-16T19:14:13.870+0000] {task_command.py:410} INFO - Running <TaskInstance: dag_mlops_full_pipeline.preprocess_data scheduled__2026-03-16T19:05:00+00:00 [running]> on host 87aa27980d8e
+[2026-03-16T19:14:13.897+0000] {taskinstance.py:1570} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='dag_mlops_full_pipeline' AIRFLOW_CTX_TASK_ID='preprocess_data' AIRFLOW_CTX_EXECUTION_DATE='2026-03-16T19:05:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-03-16T19:05:00+00:00'
+[2026-03-16T19:14:13.905+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-16T19:14:13.918+0000] {logging_mixin.py:149} INFO - Filas a procesar: 5810
+[2026-03-16T19:14:14.942+0000] {logging_mixin.py:149} INFO - Preprocesamiento completado: 5810 filas en ambas tablas
+[2026-03-16T19:14:14.943+0000] {python.py:183} INFO - Done. Returned value was: None
+[2026-03-16T19:14:14.947+0000] {taskinstance.py:1373} INFO - Marking task as SUCCESS. dag_id=dag_mlops_full_pipeline, task_id=preprocess_data, execution_date=20260316T190500, start_date=20260316T191413, end_date=20260316T191414
+[2026-03-16T19:14:14.988+0000] {local_task_job_runner.py:232} INFO - Task exited with return code 0
+[2026-03-16T19:14:15.000+0000] {taskinstance.py:2674} INFO - 1 downstream tasks scheduled from follow-on schedule check

@@ -1,0 +1,25 @@
+[2026-03-16T16:50:03.439+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_restart_data.drop_tables manual__2026-03-16T16:50:01.833153+00:00 [queued]>
+[2026-03-16T16:50:03.442+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_restart_data.drop_tables manual__2026-03-16T16:50:01.833153+00:00 [queued]>
+[2026-03-16T16:50:03.442+0000] {taskinstance.py:1331} INFO - Starting attempt 1 of 1
+[2026-03-16T16:50:03.447+0000] {taskinstance.py:1350} INFO - Executing <Task(PythonOperator): drop_tables> on 2026-03-16 16:50:01.833153+00:00
+[2026-03-16T16:50:03.448+0000] {standard_task_runner.py:57} INFO - Started process 17028 to run task
+[2026-03-16T16:50:03.450+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'dag_restart_data', 'drop_tables', 'manual__2026-03-16T16:50:01.833153+00:00', '--job-id', '220', '--raw', '--subdir', 'DAGS_FOLDER/dag_restart_data.py', '--cfg-path', '/tmp/tmp5j4k4qki']
+[2026-03-16T16:50:03.451+0000] {standard_task_runner.py:85} INFO - Job 220: Subtask drop_tables
+[2026-03-16T16:50:03.468+0000] {task_command.py:410} INFO - Running <TaskInstance: dag_restart_data.drop_tables manual__2026-03-16T16:50:01.833153+00:00 [running]> on host 87aa27980d8e
+[2026-03-16T16:50:03.497+0000] {taskinstance.py:1570} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='dag_restart_data' AIRFLOW_CTX_TASK_ID='drop_tables' AIRFLOW_CTX_EXECUTION_DATE='2026-03-16T16:50:01.833153+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-03-16T16:50:01.833153+00:00'
+[2026-03-16T16:50:03.498+0000] {logging_mixin.py:149} INFO - Borrando tablas de PostgreSQL...
+[2026-03-16T16:50:03.500+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-16T16:50:03.501+0000] {sql.py:375} INFO - Running statement: DROP TABLE IF EXISTS public.training_data_ready;, parameters: None
+[2026-03-16T16:50:03.518+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-16T16:50:03.519+0000] {sql.py:375} INFO - Running statement: DROP TABLE IF EXISTS public.training_data_processed;, parameters: None
+[2026-03-16T16:50:03.523+0000] {base.py:73} INFO - Using connection ID 'postgres_default' for task execution.
+[2026-03-16T16:50:03.523+0000] {sql.py:375} INFO - Running statement: DROP TABLE IF EXISTS public.training_data;, parameters: None
+[2026-03-16T16:50:03.525+0000] {logging_mixin.py:149} INFO - Tablas eliminadas:
+[2026-03-16T16:50:03.525+0000] {logging_mixin.py:149} INFO -   - training_data_ready
+[2026-03-16T16:50:03.525+0000] {logging_mixin.py:149} INFO -   - training_data_processed
+[2026-03-16T16:50:03.525+0000] {logging_mixin.py:149} INFO -   - training_data
+[2026-03-16T16:50:03.525+0000] {logging_mixin.py:149} INFO - Listo. Ya puedes activar el DAG principal para una nueva ronda de 10 batches.
+[2026-03-16T16:50:03.525+0000] {python.py:183} INFO - Done. Returned value was: None
+[2026-03-16T16:50:03.528+0000] {taskinstance.py:1373} INFO - Marking task as SUCCESS. dag_id=dag_restart_data, task_id=drop_tables, execution_date=20260316T165001, start_date=20260316T165003, end_date=20260316T165003
+[2026-03-16T16:50:03.550+0000] {local_task_job_runner.py:232} INFO - Task exited with return code 0
+[2026-03-16T16:50:03.557+0000] {taskinstance.py:2674} INFO - 0 downstream tasks scheduled from follow-on schedule check

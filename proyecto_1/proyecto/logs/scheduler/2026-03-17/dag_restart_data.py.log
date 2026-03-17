@@ -1,0 +1,28 @@
+[2026-03-17T00:00:09.845+0000] {processor.py:156} INFO - Started process (PID=47870) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T00:00:09.845+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T00:00:09.846+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:00:09.846+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T00:00:09.850+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T00:00:09.863+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:00:09.863+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T00:00:09.873+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:00:09.873+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T00:00:09.881+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.038 seconds
+[2026-03-17T00:00:40.176+0000] {processor.py:156} INFO - Started process (PID=47902) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T00:00:40.177+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T00:00:40.178+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:00:40.178+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T00:00:40.185+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T00:00:40.205+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:00:40.205+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T00:00:40.217+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:00:40.217+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T00:00:40.224+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.051 seconds
+[2026-03-17T00:01:10.513+0000] {processor.py:156} INFO - Started process (PID=47934) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T00:01:10.514+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T00:01:10.515+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:01:10.515+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T00:01:10.523+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T00:01:10.547+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:01:10.547+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T00:01:10.559+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:01:10.559+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T00:01:10.565+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.056 seconds
+[2026-03-17T00:01:40.861+0000] {processor.py:156} INFO - Started process (PID=47966) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T00:01:40.862+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T00:01:40.862+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:01:40.862+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T00:01:40.874+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T00:01:40.900+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:01:40.900+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T00:01:40.912+0000] {logging_mixin.py:149} INFO - [2026-03-17T00:01:40.912+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T00:01:40.922+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.065 seconds

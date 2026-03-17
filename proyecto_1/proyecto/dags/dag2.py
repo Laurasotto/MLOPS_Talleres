@@ -10,15 +10,17 @@ from sklearn.preprocessing import LabelEncoder
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.models import Variable, DagModel
+from airflow import settings
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # CONFIGURACION GENERAL
 # ──────────────────────────────────────────────────────────────────────────────
 POSTGRES_CONN_ID  = "postgres_default"
-TABLE_NAME        = "training_data"           # Etapa 1: datos crudos de la API
-PROCESSED_TABLE   = "training_data_processed" # Etapa 2: datos normalizados y encoded
-READY_TABLE       = "training_data_ready"     # Etapa 3: datos listos para entrenar (sin metadatos)
+TABLE_NAME        = "training_data"
+PROCESSED_TABLE   = "training_data_processed"
+READY_TABLE       = "training_data_ready"
 API_BASE_URL      = "http://host.docker.internal:8080/data"
 GROUP_NUMBER      = 4
 
@@ -32,33 +34,26 @@ MINIO_ACCESS_KEY  = "minioadmin"
 MINIO_SECRET_KEY  = "minioadmin"
 MINIO_BUCKET      = "models"
 
+# Numero maximo de ejecuciones antes de pausar el DAG.
+# Variable de Airflow usada como contador: "pipeline_run_count"
+# Se inicializa en 0 y se incrementa en 1 en cada ejecucion exitosa.
+MAX_RUNS          = 10
+COUNTER_VAR       = "pipeline_run_count"
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAREA 1: create_tables
-# Borra y recrea las TRES tablas en cada ejecucion para empezar desde cero.
-#
-# Las tres etapas de datos en PostgreSQL:
-#   - training_data:           datos crudos tal como vienen de la API
-#   - training_data_processed: datos normalizados y con variables categoricas encoded
-#   - training_data_ready:     datos listos para entrenar, sin metadatos de pipeline
-#                              (sin group_number, batch_number, inserted_at)
-#
-# El orden del DROP importa: primero las tablas dependientes, luego la base.
+# Crea las tres tablas SI NO EXISTEN.
+# A diferencia de antes, ya NO hace DROP — eso lo maneja dag_restart_data.
+# Esto permite acumular datos de los 10 batches en las mismas tablas.
 # ══════════════════════════════════════════════════════════════════════════════
 def create_tables():
     hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
 
-    print("Eliminando tablas anteriores si existen...")
-    hook.run(f"DROP TABLE IF EXISTS public.{READY_TABLE};")
-    hook.run(f"DROP TABLE IF EXISTS public.{PROCESSED_TABLE};")
-    hook.run(f"DROP TABLE IF EXISTS public.{TABLE_NAME};")
-    print("Tablas eliminadas")
-
-    # ── Etapa 1: datos crudos ─────────────────────────────────────────────
-    # Guarda exactamente lo que devuelve la API, sin ninguna transformacion.
-    # wilderness_area y soil_type se guardan como texto (VARCHAR).
+    # CREATE TABLE IF NOT EXISTS: si la tabla ya existe, no hace nada.
+    # Si no existe, la crea. Asi los datos se acumulan entre ejecuciones.
     raw_sql = f"""
-    CREATE TABLE public.{TABLE_NAME} (
+    CREATE TABLE IF NOT EXISTS public.{TABLE_NAME} (
         id                                      SERIAL PRIMARY KEY,
         group_number                            INTEGER,
         batch_number                            INTEGER,
@@ -79,13 +74,8 @@ def create_tables():
     );
     """
 
-    # ── Etapa 2: datos procesados ─────────────────────────────────────────
-    # Mismas columnas pero transformadas:
-    #   - Numeros normalizados al rango [0,1] con Min-Max
-    #   - wilderness_area y soil_type convertidos a enteros (Label Encoding)
-    # Todavia incluye metadatos de pipeline (group_number, batch_number).
     processed_sql = f"""
-    CREATE TABLE public.{PROCESSED_TABLE} (
+    CREATE TABLE IF NOT EXISTS public.{PROCESSED_TABLE} (
         id                                      SERIAL PRIMARY KEY,
         group_number                            INTEGER,
         batch_number                            INTEGER,
@@ -106,13 +96,8 @@ def create_tables():
     );
     """
 
-    # ── Etapa 3: datos listos para entrenamiento ──────────────────────────
-    # Solo contiene las columnas que el modelo necesita para entrenar.
-    # Se eliminan los metadatos de pipeline: group_number, batch_number,
-    # inserted_at. Esta es la tabla que el notebook de Jupyter lee para
-    # entrenar el modelo directamente.
     ready_sql = f"""
-    CREATE TABLE public.{READY_TABLE} (
+    CREATE TABLE IF NOT EXISTS public.{READY_TABLE} (
         id                                      SERIAL PRIMARY KEY,
         elevation                               FLOAT,
         aspect                                  FLOAT,
@@ -130,19 +115,16 @@ def create_tables():
     );
     """
 
-    print("Creando tablas nuevas...")
+    print("Verificando/creando tablas en Postgres...")
     hook.run(raw_sql)
     hook.run(processed_sql)
     hook.run(ready_sql)
-    print("Tres tablas creadas y listas")
-    print(f"  - {TABLE_NAME}:     datos crudos")
-    print(f"  - {PROCESSED_TABLE}: datos procesados")
-    print(f"  - {READY_TABLE}:      datos listos para entrenar")
+    print("Tablas listas")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAREA 2: get_api_data
-# Llama a la API externa y guarda los datos crudos en training_data.
+# Llama a la API externa y guarda los datos crudos en PostgreSQL.
 # ══════════════════════════════════════════════════════════════════════════════
 def get_api_data(**context):
     hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
@@ -208,9 +190,7 @@ def get_api_data(**context):
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAREA 3: preprocess_data
-# Lee los datos crudos, aplica transformaciones y los guarda en DOS tablas:
-#   - training_data_processed: con metadatos (group_number, batch_number)
-#   - training_data_ready:     sin metadatos, lista para entrenar
+# Transforma los datos y los guarda en las dos tablas procesadas.
 # ══════════════════════════════════════════════════════════════════════════════
 def preprocess_data(**context):
     batch_number = context["ti"].xcom_pull(key="batch_number", task_ids="get_api_data")
@@ -250,13 +230,11 @@ def preprocess_data(**context):
         df = pd.DataFrame(rows, columns=columns)
         print(f"Filas a procesar: {len(df)}")
 
-        # Label Encoding: texto a numero entero
         le_wilderness = LabelEncoder()
         le_soil       = LabelEncoder()
         df["wilderness_area_encoded"] = le_wilderness.fit_transform(df["wilderness_area"])
         df["soil_type_encoded"]       = le_soil.fit_transform(df["soil_type"])
 
-        # Normalizacion Min-Max: escala cada columna al rango [0, 1]
         numeric_cols = [
             "elevation", "aspect", "slope",
             "horizontal_distance_to_hydrology", "vertical_distance_to_hydrology",
@@ -269,7 +247,6 @@ def preprocess_data(**context):
             col_max = df[col].max()
             df[col] = (df[col] - col_min) / (col_max - col_min + 1e-8)
 
-        # ── Insertar en training_data_processed (con metadatos) ───────────
         insert_processed = f"""
         INSERT INTO public.{PROCESSED_TABLE} (
             group_number, batch_number,
@@ -286,11 +263,6 @@ def preprocess_data(**context):
         )
         """
 
-        # ── Insertar en training_data_ready (sin metadatos) ───────────────
-        # Esta tabla es la entrada directa al entrenamiento del modelo.
-        # No incluye group_number, batch_number ni inserted_at porque
-        # esos campos no son features del modelo — son solo metadatos
-        # de como se recolecto el dato.
         insert_ready = f"""
         INSERT INTO public.{READY_TABLE} (
             elevation, aspect, slope,
@@ -307,7 +279,6 @@ def preprocess_data(**context):
         """
 
         for _, row in df.iterrows():
-            # Insertar en tabla procesada (con metadatos)
             cur.execute(insert_processed, (
                 int(row["group_number"]), int(row["batch_number"]),
                 float(row["elevation"]), float(row["aspect"]), float(row["slope"]),
@@ -322,7 +293,6 @@ def preprocess_data(**context):
                 int(row["cover_type"])
             ))
 
-            # Insertar en tabla lista para entrenar (sin metadatos)
             cur.execute(insert_ready, (
                 float(row["elevation"]), float(row["aspect"]), float(row["slope"]),
                 float(row["horizontal_distance_to_hydrology"]),
@@ -337,9 +307,7 @@ def preprocess_data(**context):
             ))
 
         conn.commit()
-        print(f"Preprocesamiento completado: {len(df)} filas")
-        print(f"  - Insertadas en {PROCESSED_TABLE}")
-        print(f"  - Insertadas en {READY_TABLE}")
+        print(f"Preprocesamiento completado: {len(df)} filas en ambas tablas")
 
     finally:
         cur.close()
@@ -349,20 +317,6 @@ def preprocess_data(**context):
 # ══════════════════════════════════════════════════════════════════════════════
 # TAREA 4: trigger_jupyter
 # Ejecuta el notebook train_model.ipynb en Jupyter via WebSocket.
-#
-# Flujo:
-#   A) Crear kernel via HTTP
-#   B) Abrir conexion WebSocket al canal del kernel
-#   C) Esperar a que el kernel este idle
-#   D) Leer el notebook
-#   E) Inyectar parametros como celda separada
-#   F) Ejecutar cada celda individualmente
-#      CAMBIO: En vez de concatenar todas las celdas en un solo string
-#      (causaba SyntaxError por caracteres especiales en los comentarios),
-#      ahora se ejecuta cada celda por separado esperando que termine
-#      antes de enviar la siguiente. Ademas, cell["source"] puede ser string
-#      o lista de strings, por eso se usa isinstance para manejarlo.
-#   G) Cerrar WebSocket y eliminar kernel
 # ══════════════════════════════════════════════════════════════════════════════
 def trigger_jupyter(**context):
     batch_number = context["ti"].xcom_pull(key="batch_number", task_ids="get_api_data")
@@ -421,7 +375,6 @@ def trigger_jupyter(**context):
 
         return [f"Celda {cell_num} supero el timeout de {max_time}s"]
 
-    # Paso A: Crear kernel
     print("Creando kernel en Jupyter...")
     r = requests.post(
         f"{JUPYTER_BASE_URL}/api/kernels",
@@ -433,13 +386,11 @@ def trigger_jupyter(**context):
     print(f"Kernel creado: {kernel_id}")
 
     try:
-        # Paso B: Abrir WebSocket
         ws_url = f"{JUPYTER_WS_URL}/api/kernels/{kernel_id}/channels?token={JUPYTER_TOKEN}"
         print("Conectando WebSocket...")
         ws = websocket.create_connection(ws_url, timeout=30)
         print("WebSocket conectado")
 
-        # Paso C: Esperar idle
         print("Esperando que el kernel este listo...")
         for _ in range(30):
             msg = json.loads(ws.recv())
@@ -451,7 +402,6 @@ def trigger_jupyter(**context):
                     break
             time.sleep(1)
 
-        # Paso D: Leer el notebook
         print(f"Leyendo notebook {NOTEBOOK_NAME}...")
         nb_response = requests.get(
             f"{JUPYTER_BASE_URL}/api/contents/{NOTEBOOK_NAME}",
@@ -460,7 +410,6 @@ def trigger_jupyter(**context):
         nb_response.raise_for_status()
         cells = nb_response.json()["content"]["cells"]
 
-        # Paso E: Inyectar parametros como celda separada
         param_code = (
             "import os\n"
             f"os.environ['BATCH_NUMBER'] = '{batch_number}'\n"
@@ -472,16 +421,10 @@ def trigger_jupyter(**context):
         if errors:
             raise RuntimeError(f"Error inyectando parametros: {errors}")
 
-        # Paso F: Ejecutar cada celda individualmente
-        # CAMBIO: Se ejecuta celda por celda en vez de concatenar todo en un
-        # solo string. Esto evita el SyntaxError por caracteres especiales en
-        # los comentarios del notebook. Ademas, cell["source"] puede ser string
-        # o lista de strings, por eso se usa isinstance para manejarlo.
         code_cells = [c for c in cells if c["cell_type"] == "code"]
         print(f"Ejecutando {len(code_cells)} celdas del notebook...")
 
         for i, cell in enumerate(code_cells, start=1):
-            # CAMBIO: manejar source como string o lista de strings
             src = cell["source"]
             cell_code = src if isinstance(src, str) else "".join(src)
 
@@ -496,7 +439,6 @@ def trigger_jupyter(**context):
         print("Todas las celdas ejecutadas exitosamente")
 
     finally:
-        # Paso G: Cerrar WebSocket y eliminar kernel
         try:
             ws.close()
         except Exception:
@@ -509,16 +451,24 @@ def trigger_jupyter(**context):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAREA 5: verify_model_saved
-# Verifica que el notebook guardo el modelo en MinIO correctamente.
+# TAREA 5: verify_and_stop
+# Incrementa el contador de ejecuciones usando Airflow Variables.
+# Cuando llega a MAX_RUNS, pausa el DAG y resetea el contador a 0.
+#
+# Airflow Variables es un almacen clave-valor dentro de Airflow.
+# Es la forma correcta de compartir estado entre ejecuciones del DAG.
+# A diferencia de XCom (que es por ejecucion), las Variables persisten
+# entre ejecuciones hasta que se borren explicitamente.
 # ══════════════════════════════════════════════════════════════════════════════
-def verify_model_saved(**context):
+def verify_and_stop(**context):
     import boto3
     from botocore.client import Config
 
     batch_number = context["ti"].xcom_pull(key="batch_number", task_ids="get_api_data")
     group_number = context["ti"].xcom_pull(key="group_number", task_ids="get_api_data")
+    dag_id       = context["dag"].dag_id
 
+    # Verificar que el modelo fue guardado en MinIO
     s3 = boto3.client(
         "s3",
         endpoint_url=MINIO_ENDPOINT,
@@ -529,41 +479,56 @@ def verify_model_saved(**context):
     )
 
     prefix = f"group_{group_number}/"
-    print(f"Buscando modelos en MinIO: bucket={MINIO_BUCKET}, prefix={prefix}")
-
-    try:
-        response = s3.list_objects_v2(Bucket=MINIO_BUCKET, Prefix=prefix)
-    except Exception as e:
-        raise RuntimeError(f"No se pudo conectar a MinIO o el bucket no existe: {e}")
-
-    objects = response.get("Contents", [])
-    if not objects:
-        raise RuntimeError(
-            f"No se encontro ningun modelo en MinIO para group={group_number}."
-        )
+    response = s3.list_objects_v2(Bucket=MINIO_BUCKET, Prefix=prefix)
+    objects  = response.get("Contents", [])
 
     batch_models = [o for o in objects if f"batch_{batch_number}" in o["Key"]]
     if not batch_models:
-        raise RuntimeError(
-            f"No se encontro modelo para batch={batch_number} en MinIO. "
-            f"Modelos existentes: {[o['Key'] for o in objects]}"
-        )
+        raise RuntimeError(f"No se encontro modelo para batch={batch_number} en MinIO.")
 
     latest_model = batch_models[-1]
-    print(f"Modelo verificado en MinIO:")
-    print(f"  Ruta:   {latest_model['Key']}")
-    print(f"  Tamano: {latest_model['Size']} bytes")
-    print(f"  Fecha:  {latest_model['LastModified']}")
-    print("Pipeline completado exitosamente.")
+    print(f"Modelo verificado: {latest_model['Key']} ({latest_model['Size']} bytes)")
+
+    # ── Contador con Airflow Variables ────────────────────────────────────
+    # Variable.get: lee el valor actual del contador.
+    #   - Si no existe todavia, usa el default_var=0
+    # Variable.set: guarda el nuevo valor del contador
+    current_count = int(Variable.get(COUNTER_VAR, default_var=0))
+    current_count += 1
+    Variable.set(COUNTER_VAR, current_count)
+
+    print(f"Ejecucion {current_count}/{MAX_RUNS} completada")
+
+    if current_count >= MAX_RUNS:
+        # Resetear el contador a 0 para la proxima ronda
+        Variable.set(COUNTER_VAR, 0)
+        print(f"Se completaron {MAX_RUNS} ejecuciones. Pausando el DAG...")
+
+        # Pausar el DAG modificando su estado en la base de datos de Airflow
+        session   = settings.Session()
+        dag_model = session.query(DagModel).filter(DagModel.dag_id == dag_id).first()
+        if dag_model:
+            dag_model.is_paused = True
+            session.commit()
+        session.close()
+
+        print(f"DAG '{dag_id}' pausado. Para una nueva ronda corre dag_restart_data y activa el toggle.")
+    else:
+        print(f"Faltan {MAX_RUNS - current_count} ejecuciones. El DAG seguira corriendo.")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DEFINICION DEL DAG
+#
+# schedule="*/6 * * * *": ejecutar cada minuto (crontab)
+# max_active_runs=1:    solo una ejecucion a la vez
+# catchup=False:        no correr ejecuciones pasadas al activar
 # ══════════════════════════════════════════════════════════════════════════════
 with DAG(
     dag_id="dag_mlops_full_pipeline",
     start_date=datetime(2026, 3, 11),
-    schedule=None,
+    schedule="*/6 * * * *",   # cada minuto
+    max_active_runs=1,
     catchup=False,
     tags=["mlops", "postgres", "minio", "jupyter", "random_forest"]
 ) as dag:
@@ -592,8 +557,8 @@ with DAG(
     )
 
     task_verify = PythonOperator(
-        task_id="verify_model_saved",
-        python_callable=verify_model_saved,
+        task_id="verify_and_stop",
+        python_callable=verify_and_stop,
         provide_context=True
     )
 
