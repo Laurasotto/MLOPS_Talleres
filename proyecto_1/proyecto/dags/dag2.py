@@ -536,14 +536,14 @@ def verify_and_stop(**context):
 # ══════════════════════════════════════════════════════════════════════════════
 # DEFINICION DEL DAG
 #
-# schedule="*/6 * * * *": ejecutar cada minuto (crontab)
+# schedule="*/6 * * * *": ejecutar cada 6 minutos 
 # max_active_runs=1:    solo una ejecucion a la vez
 # catchup=False:        no correr ejecuciones pasadas al activar
 # ══════════════════════════════════════════════════════════════════════════════
 with DAG(
     dag_id="dag_mlops_full_pipeline",
     start_date=datetime(2026, 3, 11),
-    schedule="*/5 * * * *",   # cada minuto
+    schedule="*/6 * * * *",   # cada minuto
     max_active_runs=1,
     catchup=False,
     tags=["mlops", "postgres", "minio", "jupyter", "random_forest"]
