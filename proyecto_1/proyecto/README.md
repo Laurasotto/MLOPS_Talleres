@@ -92,6 +92,7 @@ docker-compose up -d --build
 ```
 
 Este comando construye las imágenes y levanta todos los contenedores. La primera vez puede tardar varios minutos porque descarga las imágenes base e instala las dependencias.
+<img width="1666" height="187" alt="image" src="https://github.com/user-attachments/assets/1fa5e783-c8bb-4398-b72e-7e5c2017e786" />
 
 ### 3. Verificar que todos los servicios estén corriendo
 
