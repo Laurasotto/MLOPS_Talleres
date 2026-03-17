@@ -2945,3 +2945,157 @@
 [2026-03-17T03:32:27.692+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:32:27.692+0000] {dag.py:2726} INFO - Sync 1 DAGs
 [2026-03-17T03:32:27.705+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:32:27.705+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
 [2026-03-17T03:32:27.772+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.113 seconds
+[2026-03-17T03:32:58.041+0000] {processor.py:156} INFO - Started process (PID=63535) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:32:58.042+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:32:58.043+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:32:58.043+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:32:58.049+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:32:58.064+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:32:58.064+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:32:58.076+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:32:58.076+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:32:58.083+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.045 seconds
+[2026-03-17T03:33:28.356+0000] {processor.py:156} INFO - Started process (PID=63567) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:33:28.357+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:33:28.357+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:33:28.357+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:33:28.365+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:33:28.385+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:33:28.385+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:33:28.446+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:33:28.446+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:33:28.452+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.100 seconds
+[2026-03-17T03:33:58.721+0000] {processor.py:156} INFO - Started process (PID=63599) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:33:58.722+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:33:58.722+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:33:58.722+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:33:58.728+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:33:58.746+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:33:58.746+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:33:58.758+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:33:58.758+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:33:58.765+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.047 seconds
+[2026-03-17T03:34:29.054+0000] {processor.py:156} INFO - Started process (PID=63631) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:34:29.055+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:34:29.055+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:34:29.055+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:34:29.059+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:34:29.073+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:34:29.073+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:34:29.084+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:34:29.084+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:34:29.091+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.038 seconds
+[2026-03-17T03:34:59.387+0000] {processor.py:156} INFO - Started process (PID=63663) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:34:59.388+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:34:59.389+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:34:59.389+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:34:59.397+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:34:59.422+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:34:59.422+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:34:59.433+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:34:59.433+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:34:59.440+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.058 seconds
+[2026-03-17T03:35:29.680+0000] {processor.py:156} INFO - Started process (PID=63755) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:35:29.681+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:35:29.682+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:35:29.682+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:35:29.689+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:35:29.712+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:35:29.712+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:35:29.723+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:35:29.723+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:35:29.730+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.053 seconds
+[2026-03-17T03:36:00.039+0000] {processor.py:156} INFO - Started process (PID=63787) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:36:00.040+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:36:00.040+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:36:00.040+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:36:00.050+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:36:00.069+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:36:00.069+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:36:00.079+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:36:00.079+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:36:00.086+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.051 seconds
+[2026-03-17T03:36:30.413+0000] {processor.py:156} INFO - Started process (PID=63819) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:36:30.414+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:36:30.415+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:36:30.415+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:36:30.423+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:36:30.445+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:36:30.445+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:36:30.457+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:36:30.457+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:36:30.464+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.055 seconds
+[2026-03-17T03:37:00.752+0000] {processor.py:156} INFO - Started process (PID=63851) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:37:00.753+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:37:00.754+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:37:00.754+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:37:00.762+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:37:00.786+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:37:00.786+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:37:00.797+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:37:00.797+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:37:00.804+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.056 seconds
+[2026-03-17T03:37:31.108+0000] {processor.py:156} INFO - Started process (PID=63883) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:37:31.109+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:37:31.109+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:37:31.109+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:37:31.114+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:37:31.128+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:37:31.128+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:37:31.140+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:37:31.140+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:37:31.146+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.040 seconds
+[2026-03-17T03:38:01.455+0000] {processor.py:156} INFO - Started process (PID=63915) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:38:01.456+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:38:01.456+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:38:01.456+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:38:01.464+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:38:01.486+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:38:01.486+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:38:01.497+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:38:01.497+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:38:01.504+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.053 seconds
+[2026-03-17T03:38:31.819+0000] {processor.py:156} INFO - Started process (PID=63947) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:38:31.821+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:38:31.821+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:38:31.821+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:38:31.828+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:38:31.848+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:38:31.848+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:38:31.863+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:38:31.863+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:38:31.873+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.057 seconds
+[2026-03-17T03:39:02.120+0000] {processor.py:156} INFO - Started process (PID=63979) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:39:02.121+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:39:02.121+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:39:02.121+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:39:02.129+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:39:02.156+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:39:02.156+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:39:02.167+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:39:02.167+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:39:02.174+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.058 seconds
+[2026-03-17T03:39:32.409+0000] {processor.py:156} INFO - Started process (PID=64011) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:39:32.410+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:39:32.411+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:39:32.411+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:39:32.423+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:39:32.451+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:39:32.451+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:39:32.463+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:39:32.462+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:39:32.470+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.066 seconds
+[2026-03-17T03:40:02.705+0000] {processor.py:156} INFO - Started process (PID=64067) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:40:02.706+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:40:02.707+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:40:02.707+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:40:02.714+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:40:02.733+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:40:02.733+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:40:02.746+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:40:02.746+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:40:02.754+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.052 seconds
+[2026-03-17T03:40:33.047+0000] {processor.py:156} INFO - Started process (PID=64135) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:40:33.048+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:40:33.048+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:40:33.048+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:40:33.056+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:40:33.079+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:40:33.079+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:40:33.090+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:40:33.090+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:40:33.096+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.053 seconds
+[2026-03-17T03:41:03.360+0000] {processor.py:156} INFO - Started process (PID=64167) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:41:03.361+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:41:03.361+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:41:03.361+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:41:03.371+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:41:03.389+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:41:03.389+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:41:03.401+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:41:03.401+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:41:03.408+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.051 seconds
+[2026-03-17T03:41:33.696+0000] {processor.py:156} INFO - Started process (PID=64199) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:41:33.697+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:41:33.697+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:41:33.697+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:41:33.705+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:41:33.727+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:41:33.727+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:41:33.741+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:41:33.741+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:41:33.749+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.056 seconds
+[2026-03-17T03:42:04.012+0000] {processor.py:156} INFO - Started process (PID=64231) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:42:04.013+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:42:04.013+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:42:04.013+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:42:04.023+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:42:04.048+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:42:04.048+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:42:04.061+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:42:04.061+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:42:04.069+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.062 seconds
+[2026-03-17T03:42:34.407+0000] {processor.py:156} INFO - Started process (PID=64263) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:42:34.408+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:42:34.409+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:42:34.409+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:42:34.418+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:42:34.440+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:42:34.440+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:42:34.452+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:42:34.452+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:42:34.459+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.057 seconds
+[2026-03-17T03:43:04.781+0000] {processor.py:156} INFO - Started process (PID=64295) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:43:04.782+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:43:04.783+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:43:04.782+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:43:04.794+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:43:04.823+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:43:04.823+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:43:04.836+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:43:04.835+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:43:04.843+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.067 seconds
+[2026-03-17T03:43:35.110+0000] {processor.py:156} INFO - Started process (PID=64327) to work on /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:43:35.110+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag_restart_data.py for tasks to queue
+[2026-03-17T03:43:35.111+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:43:35.111+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:43:35.120+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_restart_data']) retrieved from /opt/airflow/dags/dag_restart_data.py
+[2026-03-17T03:43:35.141+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:43:35.141+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:43:35.153+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:43:35.153+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_restart_data to None, run_after=None
+[2026-03-17T03:43:35.160+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag_restart_data.py took 0.054 seconds
