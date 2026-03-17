@@ -1,9 +1,14 @@
 """
 Inference API - FastAPI
 =======================
-Esta API carga el modelo mas reciente de MinIO y expone un endpoint
-para predecir el tipo de cobertura forestal (cover_type) dado un conjunto
-de variables geograficas del terreno.
+Esta API carga el bundle mas reciente de MinIO (modelo + encoders) y expone
+un endpoint para predecir el tipo de cobertura forestal (cover_type) dado
+un conjunto de variables geograficas del terreno.
+
+El bundle contiene:
+    - model:         RandomForestClassifier entrenado
+    - le_wilderness: LabelEncoder de wilderness_area del batch de entrenamiento
+    - le_soil:       LabelEncoder de soil_type del batch de entrenamiento
 
 Endpoints:
     GET  /          -> health check
@@ -20,12 +25,10 @@ import numpy as np
 from botocore.client import Config
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from sklearn.preprocessing import LabelEncoder
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # CONFIGURACION DE MINIO
-# Estos valores deben coincidir con los definidos en el docker-compose.yaml
 # ──────────────────────────────────────────────────────────────────────────────
 MINIO_ENDPOINT   = os.environ.get("MINIO_ENDPOINT",   "http://minio:9000")
 MINIO_ACCESS_KEY = os.environ.get("MINIO_ACCESS_KEY", "minioadmin")
@@ -34,11 +37,6 @@ MINIO_BUCKET     = os.environ.get("MINIO_BUCKET",     "models")
 GROUP_NUMBER     = os.environ.get("GROUP_NUMBER",      "4")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# CLIENTE DE MINIO
-# Usamos boto3 que es compatible con la API de Amazon S3.
-# MinIO implementa la misma API, por eso podemos usar boto3 sin cambios.
-# ──────────────────────────────────────────────────────────────────────────────
 def get_s3_client():
     """Crea y retorna un cliente de S3 conectado a MinIO."""
     return boto3.client(
@@ -51,22 +49,21 @@ def get_s3_client():
     )
 
 
-def get_latest_model():
+def get_latest_bundle():
     """
-    Busca y descarga el modelo mas reciente del bucket de MinIO.
+    Busca y descarga el bundle mas reciente del bucket de MinIO.
 
-    Los modelos se guardan con el formato:
-        group_{n}/batch_{b}_acc_{a}_{timestamp}.pkl
+    Un bundle es un diccionario con:
+        - model:         el RandomForestClassifier entrenado
+        - le_wilderness: el LabelEncoder de wilderness_area
+        - le_soil:       el LabelEncoder de soil_type
 
-    Esta funcion lista todos los modelos del grupo, los ordena por fecha
-    de modificacion y descarga el mas reciente.
-
-    Retorna el modelo deserializado (objeto RandomForestClassifier).
+    Usar el bundle garantiza que los encoders de la inferencia son
+    exactamente los mismos que se usaron durante el entrenamiento.
     """
     s3 = get_s3_client()
 
-    # Listar todos los modelos del grupo en el bucket
-    prefix = f"group_{GROUP_NUMBER}/"
+    prefix   = f"group_{GROUP_NUMBER}/"
     response = s3.list_objects_v2(Bucket=MINIO_BUCKET, Prefix=prefix)
     objects  = response.get("Contents", [])
 
@@ -77,20 +74,17 @@ def get_latest_model():
         )
 
     # Ordenar por fecha de modificacion y tomar el mas reciente
-    # LastModified es un datetime que boto3 devuelve por cada objeto
     latest = sorted(objects, key=lambda x: x["LastModified"], reverse=True)[0]
-    print(f"Cargando modelo: {latest['Key']}")
+    print(f"Cargando bundle: {latest['Key']}")
 
-    # Descargar el archivo .pkl desde MinIO a memoria (sin guardarlo en disco)
-    # io.BytesIO es un buffer en memoria que actua como un archivo
+    # Descargar el archivo .pkl desde MinIO a memoria
     buffer = io.BytesIO()
     s3.download_fileobj(MINIO_BUCKET, latest["Key"], buffer)
-    buffer.seek(0)  # volver al inicio del buffer para poder leerlo
+    buffer.seek(0)
 
-    # Deserializar el modelo con pickle
-    # pickle.loads convierte los bytes del .pkl de vuelta al objeto Python
-    model = pickle.loads(buffer.read())
-    return model, latest["Key"]
+    # Deserializar el bundle completo
+    bundle = pickle.loads(buffer.read())
+    return bundle, latest["Key"]
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -107,37 +101,30 @@ app = FastAPI(
     geograficas del terreno.
 
     El modelo se carga directamente desde MinIO en cada prediccion,
-    lo que garantiza que siempre se usa el modelo mas reciente.
+    usando el bundle mas reciente que incluye el modelo y los encoders.
     """
 )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # MODELOS DE DATOS (Pydantic)
-# Pydantic valida automaticamente que los datos recibidos tengan el tipo
-# correcto y los campos requeridos. Si falta algo, devuelve un error 422.
 # ──────────────────────────────────────────────────────────────────────────────
 class PredictRequest(BaseModel):
-    """
-    Datos de entrada para la prediccion.
-    Son exactamente las mismas columnas que devuelve la API de datos del profesor,
-    tal como vienen (sin normalizar ni encodear).
-    """
-    elevation:                          int   = Field(..., description="Elevacion del terreno en metros")
-    aspect:                             int   = Field(..., description="Orientacion en grados azimuth")
-    slope:                              int   = Field(..., description="Pendiente en grados")
-    horizontal_distance_to_hydrology:   int   = Field(..., description="Distancia horizontal a agua en metros")
-    vertical_distance_to_hydrology:     int   = Field(..., description="Distancia vertical a agua en metros")
-    horizontal_distance_to_roadways:    int   = Field(..., description="Distancia horizontal a carreteras en metros")
-    hillshade_9am:                      int   = Field(..., description="Indice de sombra a las 9am (0-255)")
-    hillshade_noon:                     int   = Field(..., description="Indice de sombra al mediodia (0-255)")
-    hillshade_3pm:                      int   = Field(..., description="Indice de sombra a las 3pm (0-255)")
-    horizontal_distance_to_fire_points: int   = Field(..., description="Distancia horizontal a puntos de incendio en metros")
-    wilderness_area:                    str   = Field(..., description="Nombre del area silvestre (ej: Rawah)")
-    soil_type:                          str   = Field(..., description="Tipo de suelo (ej: C7702)")
+    """Datos de entrada para la prediccion."""
+    elevation:                          int = Field(..., description="Elevacion del terreno en metros")
+    aspect:                             int = Field(..., description="Orientacion en grados azimuth")
+    slope:                              int = Field(..., description="Pendiente en grados")
+    horizontal_distance_to_hydrology:   int = Field(..., description="Distancia horizontal a agua en metros")
+    vertical_distance_to_hydrology:     int = Field(..., description="Distancia vertical a agua en metros")
+    horizontal_distance_to_roadways:    int = Field(..., description="Distancia horizontal a carreteras en metros")
+    hillshade_9am:                      int = Field(..., description="Indice de sombra a las 9am (0-255)")
+    hillshade_noon:                     int = Field(..., description="Indice de sombra al mediodia (0-255)")
+    hillshade_3pm:                      int = Field(..., description="Indice de sombra a las 3pm (0-255)")
+    horizontal_distance_to_fire_points: int = Field(..., description="Distancia horizontal a puntos de incendio en metros")
+    wilderness_area:                    str = Field(..., description="Nombre del area silvestre (ej: Rawah)")
+    soil_type:                          str = Field(..., description="Tipo de suelo (ej: C7702)")
 
     class Config:
-        # Ejemplo que aparece en el Swagger UI (/docs)
         json_schema_extra = {
             "example": {
                 "elevation": 2596,
@@ -158,13 +145,12 @@ class PredictRequest(BaseModel):
 
 class PredictResponse(BaseModel):
     """Respuesta de la prediccion."""
-    cover_type:      int   = Field(..., description="Tipo de cobertura forestal predicho (1-7)")
-    cover_type_name: str   = Field(..., description="Nombre del tipo de cobertura forestal")
-    model_used:      str   = Field(..., description="Nombre del modelo usado para la prediccion")
+    cover_type:      int = Field(..., description="Tipo de cobertura forestal predicho (1-7)")
+    cover_type_name: str = Field(..., description="Nombre del tipo de cobertura forestal")
+    model_used:      str = Field(..., description="Nombre del bundle usado para la prediccion")
 
 
 # Mapeo de cover_type (1-7) a nombre legible
-# Segun el dataset original de Covertype del UCI Machine Learning Repository
 COVER_TYPE_NAMES = {
     1: "Spruce/Fir",
     2: "Lodgepole Pine",
@@ -182,10 +168,7 @@ COVER_TYPE_NAMES = {
 
 @app.get("/", tags=["health"])
 async def root():
-    """
-    Health check — verifica que la API esta corriendo.
-    Tambien verifica la conexion con MinIO.
-    """
+    """Health check — verifica que la API esta corriendo."""
     try:
         s3 = get_s3_client()
         s3.list_buckets()
@@ -203,10 +186,7 @@ async def root():
 
 @app.get("/models", tags=["models"])
 async def list_models():
-    """
-    Lista todos los modelos disponibles en MinIO para este grupo.
-    Muestra el nombre, tamano y fecha de cada modelo.
-    """
+    """Lista todos los modelos disponibles en MinIO para este grupo."""
     try:
         s3       = get_s3_client()
         prefix   = f"group_{GROUP_NUMBER}/"
@@ -216,7 +196,6 @@ async def list_models():
         if not objects:
             return {"models": [], "total": 0}
 
-        # Ordenar por fecha de modificacion (mas reciente primero)
         objects = sorted(objects, key=lambda x: x["LastModified"], reverse=True)
 
         models = [
@@ -243,43 +222,50 @@ async def predict(request: PredictRequest):
     """
     Predice el tipo de cobertura forestal dado un conjunto de variables del terreno.
 
-    El proceso es:
-    1. Cargar el modelo mas reciente desde MinIO
-    2. Aplicar Label Encoding a wilderness_area y soil_type
-       (los modelos de ML no entienden texto, solo numeros)
+    Proceso:
+    1. Cargar el bundle mas reciente desde MinIO (modelo + encoders)
+    2. Aplicar el LabelEncoder guardado en el bundle para wilderness_area y soil_type
+       Esto garantiza que el encoding es identico al del entrenamiento
     3. Construir el vector de features en el orden correcto
     4. Predecir con el modelo
     5. Retornar el cover_type predicho y su nombre
-
-    Nota sobre el preprocesamiento:
-    El modelo fue entrenado con datos normalizados (Min-Max) y con
-    Label Encoding. Para la inferencia aplicamos Label Encoding pero
-    NO normalizamos, ya que Random Forest no requiere normalizacion
-    para funcionar correctamente — los arboles de decision son
-    invariantes a la escala de las variables.
     """
     try:
-        # Cargar el modelo mas reciente de MinIO
-        model, model_name = get_latest_model()
+        # Cargar el bundle mas reciente de MinIO
+        bundle, bundle_name = get_latest_bundle()
 
-        # ── Label Encoding ────────────────────────────────────────────────
-        # Convertir wilderness_area y soil_type de texto a numero.
-        # Usamos LabelEncoder de sklearn que asigna un entero a cada
-        # categoria unica. Como solo tenemos un valor, fit_transform
-        # siempre devolvera 0, pero es la forma correcta de hacerlo.
+        # Extraer el modelo y los encoders del bundle
+        model         = bundle["model"]
+        le_wilderness = bundle["le_wilderness"]
+        le_soil       = bundle["le_soil"]
+
+        # ── Label Encoding con los encoders del entrenamiento ─────────────
+        # Usamos transform() en vez de fit_transform() porque el encoder
+        # ya fue entrenado (fit) durante el entrenamiento del modelo.
+        # transform() solo aplica el mapeo que ya conoce.
         #
-        # IMPORTANTE: En produccion real deberiamos guardar los encoders
-        # del entrenamiento y usarlos aqui para garantizar consistencia.
-        # Para este proyecto usamos esta aproximacion simplificada.
-        le_wilderness = LabelEncoder()
-        le_soil       = LabelEncoder()
+        # Si llega un valor que el encoder nunca vio, lanza ValueError.
+        # Lo capturamos y devolvemos un error descriptivo al cliente.
+        try:
+            wilderness_encoded = le_wilderness.transform([request.wilderness_area])[0]
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"wilderness_area '{request.wilderness_area}' no fue visto durante el entrenamiento. "
+                       f"Valores validos: {list(le_wilderness.classes_)}"
+            )
 
-        wilderness_encoded = le_wilderness.fit_transform([request.wilderness_area])[0]
-        soil_encoded       = le_soil.fit_transform([request.soil_type])[0]
+        try:
+            soil_encoded = le_soil.transform([request.soil_type])[0]
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"soil_type '{request.soil_type}' no fue visto durante el entrenamiento. "
+                       f"Valores validos: {list(le_soil.classes_)}"
+            )
 
         # ── Construir el vector de features ──────────────────────────────
-        # El orden debe ser exactamente el mismo que se uso en el entrenamiento.
-        # Ver el notebook train_model.ipynb para confirmar el orden.
+        # El orden debe ser exactamente el mismo que en el entrenamiento
         features = np.array([[
             request.elevation,
             request.aspect,
@@ -296,7 +282,6 @@ async def predict(request: PredictRequest):
         ]])
 
         # ── Prediccion ────────────────────────────────────────────────────
-        # model.predict devuelve un array, tomamos el primer elemento [0]
         cover_type = int(model.predict(features)[0])
         cover_name = COVER_TYPE_NAMES.get(cover_type, "Unknown")
 
@@ -305,7 +290,7 @@ async def predict(request: PredictRequest):
         return PredictResponse(
             cover_type=cover_type,
             cover_type_name=cover_name,
-            model_used=model_name
+            model_used=bundle_name
         )
 
     except HTTPException:

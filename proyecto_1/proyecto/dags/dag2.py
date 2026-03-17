@@ -228,7 +228,23 @@ def preprocess_data(**context):
             "wilderness_area", "soil_type", "cover_type"
         ]
         df = pd.DataFrame(rows, columns=columns)
-        print(f"Filas a procesar: {len(df)}")
+        print(f"Filas recibidas: {len(df)}")
+
+        # ── Filtro de calidad: eliminar cover_type invalido ───────────────
+        # PROBLEMA DETECTADO: la API del profesor devuelve filas con
+        # cover_type=0, que no existe en el dataset Covertype original
+        # (los valores validos son del 1 al 7 segun la documentacion).
+        # Al entrenar con esos datos invalidos, el modelo aprende a predecir
+        # 0 como clase valida, causando predicciones incorrectas en la API
+        # de inferencia (cover_type_name="Unknown").
+        # SOLUCION: filtramos las filas con cover_type fuera del rango [1,7]
+        # antes de insertar en las tablas procesadas y de entrenamiento.
+        filas_antes    = len(df)
+        df             = df[df["cover_type"].between(1, 7)]
+        filas_eliminadas = filas_antes - len(df)
+        if filas_eliminadas > 0:
+            print(f"Filas eliminadas por cover_type invalido (fuera de [1,7]): {filas_eliminadas}")
+        print(f"Filas validas para procesar: {len(df)}")
 
         le_wilderness = LabelEncoder()
         le_soil       = LabelEncoder()
@@ -527,7 +543,7 @@ def verify_and_stop(**context):
 with DAG(
     dag_id="dag_mlops_full_pipeline",
     start_date=datetime(2026, 3, 11),
-    schedule="*/6 * * * *",   # cada minuto
+    schedule="*/5 * * * *",   # cada minuto
     max_active_runs=1,
     catchup=False,
     tags=["mlops", "postgres", "minio", "jupyter", "random_forest"]

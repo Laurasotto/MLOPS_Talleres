@@ -1,0 +1,90 @@
+[2026-03-17T02:20:05.589+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.trigger_jupyter scheduled__2026-03-17T02:15:00+00:00 [queued]>
+[2026-03-17T02:20:05.592+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_mlops_full_pipeline.trigger_jupyter scheduled__2026-03-17T02:15:00+00:00 [queued]>
+[2026-03-17T02:20:05.592+0000] {taskinstance.py:1331} INFO - Starting attempt 1 of 1
+[2026-03-17T02:20:05.598+0000] {taskinstance.py:1350} INFO - Executing <Task(PythonOperator): trigger_jupyter> on 2026-03-17 02:15:00+00:00
+[2026-03-17T02:20:05.600+0000] {standard_task_runner.py:57} INFO - Started process 57973 to run task
+[2026-03-17T02:20:05.602+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'dag_mlops_full_pipeline', 'trigger_jupyter', 'scheduled__2026-03-17T02:15:00+00:00', '--job-id', '657', '--raw', '--subdir', 'DAGS_FOLDER/dag2.py', '--cfg-path', '/tmp/tmp_5_yboqh']
+[2026-03-17T02:20:05.603+0000] {standard_task_runner.py:85} INFO - Job 657: Subtask trigger_jupyter
+[2026-03-17T02:20:05.625+0000] {task_command.py:410} INFO - Running <TaskInstance: dag_mlops_full_pipeline.trigger_jupyter scheduled__2026-03-17T02:15:00+00:00 [running]> on host 87aa27980d8e
+[2026-03-17T02:20:05.664+0000] {taskinstance.py:1570} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='dag_mlops_full_pipeline' AIRFLOW_CTX_TASK_ID='trigger_jupyter' AIRFLOW_CTX_EXECUTION_DATE='2026-03-17T02:15:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-03-17T02:15:00+00:00'
+[2026-03-17T02:20:05.672+0000] {logging_mixin.py:149} INFO - Creando kernel en Jupyter...
+[2026-03-17T02:20:05.695+0000] {logging_mixin.py:149} INFO - Kernel creado: 597d7c65-8657-4c66-9d78-12d51697c69d
+[2026-03-17T02:20:05.695+0000] {logging_mixin.py:149} INFO - Conectando WebSocket...
+[2026-03-17T02:20:05.973+0000] {logging_mixin.py:149} INFO - WebSocket conectado
+[2026-03-17T02:20:05.973+0000] {logging_mixin.py:149} INFO - Esperando que el kernel este listo...
+[2026-03-17T02:20:05.983+0000] {logging_mixin.py:149} INFO -   Estado kernel: busy
+[2026-03-17T02:20:06.987+0000] {logging_mixin.py:149} INFO -   Estado kernel: idle
+[2026-03-17T02:20:06.987+0000] {logging_mixin.py:149} INFO - Kernel listo
+[2026-03-17T02:20:06.988+0000] {logging_mixin.py:149} INFO - Leyendo notebook train_model.ipynb...
+[2026-03-17T02:20:06.998+0000] {logging_mixin.py:149} INFO - Inyectando parametros...
+[2026-03-17T02:20:07.005+0000] {logging_mixin.py:149} INFO -   [celda 0] Parametros inyectados: batch=2, group=4
+[2026-03-17T02:20:07.007+0000] {logging_mixin.py:149} INFO - Ejecutando 7 celdas del notebook...
+[2026-03-17T02:20:07.007+0000] {logging_mixin.py:149} INFO -   Ejecutando celda 1/7...
+[2026-03-17T02:20:07.586+0000] {logging_mixin.py:149} INFO -   [celda 1] Librerias cargadas correctamente
+[2026-03-17T02:20:07.587+0000] {logging_mixin.py:149} INFO -   Ejecutando celda 2/7...
+[2026-03-17T02:20:07.590+0000] {logging_mixin.py:149} INFO -   [celda 2] Parametros: batch=2, group=4
+[2026-03-17T02:20:07.633+0000] {logging_mixin.py:149} INFO -   Ejecutando celda 3/7...
+[2026-03-17T02:20:07.661+0000] {logging_mixin.py:149} INFO -   [celda 3] Conectando a PostgreSQL en postgres:5432...
+Datos cargados: 4609 filas (sin cover_type invalido)
+   elevation    aspect     slope  horizontal_distance_to_hydrology  \
+0   0.709594  0.888889  0.530612                          0.332638   
+1   0.536381  0.722222  0.469388                          0.297185   
+2   0.338699  0.802778  0.530612                          0.421272   
+3   0.321314  0.219444  0.489796                          0.125130   
+4   0.240180  0.330556  0.408163                          0.031283   
+
+   vertical_distance_to_hydrology  horizontal_distance_to_roadways  \
+0                           0.292                         0.212266   
+1                           0.612                         0.265115   
+2                           0.670                         0.071988   
+3                           0.392                         0.241844   
+4                           0.332                         0.098739   
+
+   hillshade_9am  hillshade_noon  hillshade_3pm  \
+0       0.475962        0.679739       0.787149   
+1       0.548077        0.947712       0.887550   
+2       0.437500        0.816993       0.899598   
+3       0.947115        0.575163       0.244980   
+4       0.980769        0.764706       0.353414   
+
+   horizontal_distance_to_fire_points  wilderness_area_encoded  \
+0                            0.192859                        1   
+1                            0.314064                        1   
+2                            0.183386                        0   
+3                            0.309934                        0   
+4                            0.444256                        0   
+
+   soil_type_encoded  cover_type  
+0                 21           1  
+1                 22           1  
+2                  7           2  
+3                  6           5  
+4                  2           3
+[2026-03-17T02:20:07.662+0000] {logging_mixin.py:149} INFO -   [celda 3] /tmp/ipykernel_6345/4271717583.py:45: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(query, conn, params=(BATCH_NUMBER, GROUP_NUMBER))
+/tmp/ipykernel_6345/4271717583.py:55: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df_text = pd.read_sql(query_text, conn, params=(BATCH_NUMBER, GROUP_NUMBER))
+[2026-03-17T02:20:07.662+0000] {logging_mixin.py:149} INFO -   Ejecutando celda 4/7...
+[2026-03-17T02:20:07.667+0000] {logging_mixin.py:149} INFO -   [celda 4] Wilderness areas en el encoder: ['Cache', 'Commanche', 'Rawah']
+Soil types en el encoder: 27 tipos
+[2026-03-17T02:20:07.667+0000] {logging_mixin.py:149} INFO -   Ejecutando celda 5/7...
+[2026-03-17T02:20:07.674+0000] {logging_mixin.py:149} INFO -   [celda 5] Clases unicas en y: [np.int64(1), np.int64(2), np.int64(3), np.int64(4), np.int64(5), np.int64(6)]
+Train: 3687 filas | Test: 922 filas
+[2026-03-17T02:20:07.674+0000] {logging_mixin.py:149} INFO -   Ejecutando celda 6/7...
+[2026-03-17T02:20:07.790+0000] {logging_mixin.py:149} INFO -   [celda 6] Entrenando Random Forest...
+[2026-03-17T02:20:07.851+0000] {logging_mixin.py:149} INFO -   [celda 6] Entrenamiento completado
+Accuracy en test: 0.8894 (88.94%)
+Clases predichas: [np.int64(1), np.int64(2), np.int64(3), np.int64(4), np.int64(5), np.int64(6)]
+[2026-03-17T02:20:07.853+0000] {logging_mixin.py:149} INFO -   Ejecutando celda 7/7...
+[2026-03-17T02:20:07.903+0000] {logging_mixin.py:149} INFO -   [celda 7] Conectando a MinIO en http://minio:9000...
+[2026-03-17T02:20:07.962+0000] {logging_mixin.py:149} INFO -   [celda 7] Bundle guardado en MinIO: s3://models/group_4/batch_2_acc_0.8894_20260317_022007.pkl
+Tamano: 7350.6 KB
+Wilderness areas en el bundle: ['Cache', 'Commanche', 'Rawah']
+Soil types en el bundle: 27 tipos
+Notebook completado exitosamente
+[2026-03-17T02:20:07.963+0000] {logging_mixin.py:149} INFO - Todas las celdas ejecutadas exitosamente
+[2026-03-17T02:20:08.281+0000] {logging_mixin.py:149} INFO - Kernel 597d7c65-8657-4c66-9d78-12d51697c69d eliminado
+[2026-03-17T02:20:08.282+0000] {python.py:183} INFO - Done. Returned value was: None
+[2026-03-17T02:20:08.286+0000] {taskinstance.py:1373} INFO - Marking task as SUCCESS. dag_id=dag_mlops_full_pipeline, task_id=trigger_jupyter, execution_date=20260317T021500, start_date=20260317T022005, end_date=20260317T022008
+[2026-03-17T02:20:08.308+0000] {local_task_job_runner.py:232} INFO - Task exited with return code 0
+[2026-03-17T02:20:08.320+0000] {taskinstance.py:2674} INFO - 1 downstream tasks scheduled from follow-on schedule check
