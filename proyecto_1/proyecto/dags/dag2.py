@@ -34,24 +34,13 @@ MINIO_ACCESS_KEY  = "minioadmin"
 MINIO_SECRET_KEY  = "minioadmin"
 MINIO_BUCKET      = "models"
 
-# Numero maximo de ejecuciones antes de pausar el DAG.
-# Variable de Airflow usada como contador: "pipeline_run_count"
-# Se inicializa en 0 y se incrementa en 1 en cada ejecucion exitosa.
 MAX_RUNS          = 10
 COUNTER_VAR       = "pipeline_run_count"
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# TAREA 1: create_tables
-# Crea las tres tablas SI NO EXISTEN.
-# A diferencia de antes, ya NO hace DROP — eso lo maneja dag_restart_data.
-# Esto permite acumular datos de los 10 batches en las mismas tablas.
-# ══════════════════════════════════════════════════════════════════════════════
 def create_tables():
     hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
 
-    # CREATE TABLE IF NOT EXISTS: si la tabla ya existe, no hace nada.
-    # Si no existe, la crea. Asi los datos se acumulan entre ejecuciones.
     raw_sql = f"""
     CREATE TABLE IF NOT EXISTS public.{TABLE_NAME} (
         id                                      SERIAL PRIMARY KEY,
@@ -122,10 +111,6 @@ def create_tables():
     print("Tablas listas")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# TAREA 2: get_api_data
-# Llama a la API externa y guarda los datos crudos en PostgreSQL.
-# ══════════════════════════════════════════════════════════════════════════════
 def get_api_data(**context):
     hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
     conn = hook.get_conn()
@@ -188,10 +173,6 @@ def get_api_data(**context):
         conn.close()
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# TAREA 3: preprocess_data
-# Transforma los datos y los guarda en las dos tablas procesadas.
-# ══════════════════════════════════════════════════════════════════════════════
 def preprocess_data(**context):
     batch_number = context["ti"].xcom_pull(key="batch_number", task_ids="get_api_data")
     group_number = context["ti"].xcom_pull(key="group_number", task_ids="get_api_data")
@@ -230,38 +211,29 @@ def preprocess_data(**context):
         df = pd.DataFrame(rows, columns=columns)
         print(f"Filas recibidas: {len(df)}")
 
-        # ── Filtro de calidad: eliminar cover_type invalido ───────────────
-        # PROBLEMA DETECTADO: la API del profesor devuelve filas con
-        # cover_type=0, que no existe en el dataset Covertype original
-        # (los valores validos son del 1 al 7 segun la documentacion).
-        # Al entrenar con esos datos invalidos, el modelo aprende a predecir
-        # 0 como clase valida, causando predicciones incorrectas en la API
-        # de inferencia (cover_type_name="Unknown").
-        # SOLUCION: filtramos las filas con cover_type fuera del rango [1,7]
-        # antes de insertar en las tablas procesadas y de entrenamiento.
-        filas_antes    = len(df)
-        df             = df[df["cover_type"].between(1, 7)]
+        # Filtro de calidad: eliminar cover_type invalido (fuera de [1,7])
+        filas_antes      = len(df)
+        df               = df[df["cover_type"].between(1, 7)]
         filas_eliminadas = filas_antes - len(df)
         if filas_eliminadas > 0:
-            print(f"Filas eliminadas por cover_type invalido (fuera de [1,7]): {filas_eliminadas}")
+            print(f"Filas eliminadas por cover_type invalido: {filas_eliminadas}")
         print(f"Filas validas para procesar: {len(df)}")
 
+        # Label Encoding: convierte wilderness_area y soil_type de texto a entero
         le_wilderness = LabelEncoder()
         le_soil       = LabelEncoder()
         df["wilderness_area_encoded"] = le_wilderness.fit_transform(df["wilderness_area"])
         df["soil_type_encoded"]       = le_soil.fit_transform(df["soil_type"])
 
-        numeric_cols = [
-            "elevation", "aspect", "slope",
-            "horizontal_distance_to_hydrology", "vertical_distance_to_hydrology",
-            "horizontal_distance_to_roadways",
-            "hillshade_9am", "hillshade_noon", "hillshade_3pm",
-            "horizontal_distance_to_fire_points"
-        ]
-        for col in numeric_cols:
-            col_min = df[col].min()
-            col_max = df[col].max()
-            df[col] = (df[col] - col_min) / (col_max - col_min + 1e-8)
+        # CAMBIO: se elimina la normalizacion Min-Max de las columnas numericas.
+        # RAZON: Random Forest no requiere normalizacion — los arboles de decision
+        # dividen los datos por umbrales, no por distancias, por lo que son
+        # invariantes a la escala. Ademas, normalizar aqui causaba inconsistencia
+        # con la inferencia: el modelo entrenaba con valores entre 0 y 1, pero la
+        # Inference API recibe valores crudos (elevation=2835, etc.), lo que
+        # resultaba en predicciones incorrectas (siempre cover_type=1).
+        # Al eliminar la normalizacion, entrenamiento e inferencia usan los mismos
+        # valores crudos, garantizando consistencia.
 
         insert_processed = f"""
         INSERT INTO public.{PROCESSED_TABLE} (
@@ -330,10 +302,6 @@ def preprocess_data(**context):
         conn.close()
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# TAREA 4: trigger_jupyter
-# Ejecuta el notebook train_model.ipynb en Jupyter via WebSocket.
-# ══════════════════════════════════════════════════════════════════════════════
 def trigger_jupyter(**context):
     batch_number = context["ti"].xcom_pull(key="batch_number", task_ids="get_api_data")
     group_number = context["ti"].xcom_pull(key="group_number", task_ids="get_api_data")
@@ -341,7 +309,6 @@ def trigger_jupyter(**context):
     headers = {"Authorization": f"token {JUPYTER_TOKEN}"}
 
     def execute_cell(ws, code, cell_num):
-        """Envia una celda al kernel via WebSocket y espera que termine."""
         msg_id = str(uuid.uuid4())
         msg = {
             "header": {
@@ -466,16 +433,6 @@ def trigger_jupyter(**context):
         print(f"Kernel {kernel_id} eliminado")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# TAREA 5: verify_and_stop
-# Incrementa el contador de ejecuciones usando Airflow Variables.
-# Cuando llega a MAX_RUNS, pausa el DAG y resetea el contador a 0.
-#
-# Airflow Variables es un almacen clave-valor dentro de Airflow.
-# Es la forma correcta de compartir estado entre ejecuciones del DAG.
-# A diferencia de XCom (que es por ejecucion), las Variables persisten
-# entre ejecuciones hasta que se borren explicitamente.
-# ══════════════════════════════════════════════════════════════════════════════
 def verify_and_stop(**context):
     import boto3
     from botocore.client import Config
@@ -484,7 +441,6 @@ def verify_and_stop(**context):
     group_number = context["ti"].xcom_pull(key="group_number", task_ids="get_api_data")
     dag_id       = context["dag"].dag_id
 
-    # Verificar que el modelo fue guardado en MinIO
     s3 = boto3.client(
         "s3",
         endpoint_url=MINIO_ENDPOINT,
@@ -494,7 +450,7 @@ def verify_and_stop(**context):
         region_name="us-east-1"
     )
 
-    prefix = f"group_{group_number}/"
+    prefix   = f"group_{group_number}/"
     response = s3.list_objects_v2(Bucket=MINIO_BUCKET, Prefix=prefix)
     objects  = response.get("Contents", [])
 
@@ -505,10 +461,6 @@ def verify_and_stop(**context):
     latest_model = batch_models[-1]
     print(f"Modelo verificado: {latest_model['Key']} ({latest_model['Size']} bytes)")
 
-    # ── Contador con Airflow Variables ────────────────────────────────────
-    # Variable.get: lee el valor actual del contador.
-    #   - Si no existe todavia, usa el default_var=0
-    # Variable.set: guarda el nuevo valor del contador
     current_count = int(Variable.get(COUNTER_VAR, default_var=0))
     current_count += 1
     Variable.set(COUNTER_VAR, current_count)
@@ -516,11 +468,9 @@ def verify_and_stop(**context):
     print(f"Ejecucion {current_count}/{MAX_RUNS} completada")
 
     if current_count >= MAX_RUNS:
-        # Resetear el contador a 0 para la proxima ronda
         Variable.set(COUNTER_VAR, 0)
         print(f"Se completaron {MAX_RUNS} ejecuciones. Pausando el DAG...")
 
-        # Pausar el DAG modificando su estado en la base de datos de Airflow
         session   = settings.Session()
         dag_model = session.query(DagModel).filter(DagModel.dag_id == dag_id).first()
         if dag_model:
@@ -528,22 +478,15 @@ def verify_and_stop(**context):
             session.commit()
         session.close()
 
-        print(f"DAG '{dag_id}' pausado. Para una nueva ronda corre dag_restart_data y activa el toggle.")
+        print(f"DAG '{dag_id}' pausado.")
     else:
         print(f"Faltan {MAX_RUNS - current_count} ejecuciones. El DAG seguira corriendo.")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# DEFINICION DEL DAG
-#
-# schedule="*/6 * * * *": ejecutar cada 6 minutos 
-# max_active_runs=1:    solo una ejecucion a la vez
-# catchup=False:        no correr ejecuciones pasadas al activar
-# ══════════════════════════════════════════════════════════════════════════════
 with DAG(
     dag_id="dag_mlops_full_pipeline",
-    start_date=datetime(2026, 3, 11),
-    schedule="*/6 * * * *",   # cada minuto
+    start_date=datetime(2026, 3, 16),
+    schedule="*/5 * * * *",
     max_active_runs=1,
     catchup=False,
     tags=["mlops", "postgres", "minio", "jupyter", "random_forest"]
