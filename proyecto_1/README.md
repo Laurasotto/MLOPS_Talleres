@@ -25,7 +25,6 @@ El sistema está compuesto por los siguientes servicios corriendo en Docker Comp
 | **MinIO** | Almacenamiento de modelos | `8083` |
 | **Inference API** | API de predicción (FastAPI) | `8084` |
 
-<!-- Aquí puedes poner una imagen del diagrama de arquitectura -->
 
 ---
 
@@ -102,7 +101,6 @@ docker ps
 
 Deberías ver activos: `postgres`, `airflow-webserver`, `airflow-scheduler`, `airflow-triggerer`, `jupyter`, `minio` y `inference-api`.
 
-<!-- Aquí puedes poner una imagen del docker ps -->
 
 ---
 
@@ -116,14 +114,12 @@ Usuario: `airflow` | Contraseña: `airflow`
 
 Aquí puedes ver y ejecutar los DAGs del pipeline.
 
-<!-- Aquí puedes poner una imagen de la UI de Airflow con los DAGs -->
 
 ### Jupyter — `http://localhost:8082?token=mlops_token`
 <img width="1098" height="632" alt="image" src="https://github.com/user-attachments/assets/dedd9dbb-61ff-4c0f-8b57-9a61f51667f0" />
 
 Aquí puedes ver y editar el notebook de entrenamiento `train_model.ipynb`.
 
-<!-- Aquí puedes poner una imagen de Jupyter con el notebook -->
 
 ### MinIO — `http://localhost:8083`
 Usuario: `minioadmin` | Contraseña: `minioadmin`
@@ -131,14 +127,12 @@ Usuario: `minioadmin` | Contraseña: `minioadmin`
 
 Aquí puedes ver los modelos entrenados almacenados en el bucket `models/group_4/`.
 
-<!-- Aquí puedes poner una imagen de MinIO con los modelos -->
 
 ### Inference API — `http://localhost:8084/docs`
 <img width="1559" height="886" alt="image" src="https://github.com/user-attachments/assets/acc44371-c512-473c-b0b3-75eea9388a5d" />
 
 Aquí puedes probar la API de predicción usando el Swagger UI.
 
-<!-- Aquí puedes poner una imagen del Swagger UI -->
 
 ---
 
@@ -155,7 +149,7 @@ Crea las tres tablas en PostgreSQL si no existen:
 ### Paso 2 — `get_api_data`
 Llama a la API de datos (`http://host.docker.internal:8080/data`) enviando el número de grupo. La API devuelve un batch de datos del dataset Forest Cover Type.
 
-<!-- Aquí puedes poner una imagen del log de get_api_data en Airflow -->
+<img width="1700" height="640" alt="image" src="https://github.com/user-attachments/assets/37cd996e-fd54-4c32-ae68-abde3ac8144c" />
 
 ### Paso 3 — `preprocess_data`
 Aplica tres transformaciones a los datos:
@@ -169,12 +163,11 @@ Se comunica con Jupyter vía WebSocket para ejecutar el notebook `train_model.ip
 - Entrena un modelo Random Forest con `class_weight='balanced'` para manejar el desbalance de clases
 - Guarda un bundle (modelo + encoders) en MinIO
 
-<!-- Aquí puedes poner una imagen del log de trigger_jupyter mostrando el accuracy -->
+<img width="1698" height="864" alt="image" src="https://github.com/user-attachments/assets/9d7fbd11-08ac-48ba-b954-ef66d4baa4ca" />
 
 ### Paso 5 — `verify_and_stop`
 Verifica que el modelo fue guardado correctamente en MinIO e incrementa un contador usando Airflow Variables. Cuando llega a 10 ejecuciones, pausa el DAG automáticamente.
 
-<!-- Aquí puedes poner una imagen del grid de Airflow con las 10 ejecuciones verdes -->
 
 ---
 
@@ -212,7 +205,6 @@ El archivo contiene un bundle con tres componentes:
 
 Guardar los encoders junto con el modelo garantiza que la inferencia use exactamente el mismo mapeo de categorías que se usó durante el entrenamiento.
 
-<!-- Aquí puedes poner una imagen de MinIO con los modelos -->
 
 ---
 
@@ -258,7 +250,6 @@ Recibe los datos de un terreno y devuelve el tipo de cobertura forestal predicho
 
 Si el `wilderness_area` o `soil_type` enviado no fue visto durante el entrenamiento, la API devuelve un error `400` con la lista de valores válidos.
 
-<!-- Aquí puedes poner una imagen del Swagger UI con una predicción exitosa -->
 
 ---
 
