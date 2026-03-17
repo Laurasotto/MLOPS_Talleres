@@ -1,0 +1,17 @@
+# Framework web para construir la API
+fastapi
+
+# Servidor ASGI para correr FastAPI en produccion
+uvicorn
+
+# Cliente de Amazon S3 compatible con MinIO
+boto3
+
+# Para manipulacion numerica (construir el vector de features)
+numpy
+
+# Para cargar el modelo serializado con pickle
+scikit-learn
+
+# Para validacion de datos de entrada y salida
+pydantic
