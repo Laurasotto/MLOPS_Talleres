@@ -112,12 +112,14 @@ Una vez levantado el sistema, puedes acceder a las siguientes interfaces:
 
 ### Airflow — `http://localhost:8081`
 Usuario: `airflow` | Contraseña: `airflow`
+<img width="1709" height="652" alt="image" src="https://github.com/user-attachments/assets/6bafdc41-1187-4785-b6fb-bbe97b4db667" />
 
 Aquí puedes ver y ejecutar los DAGs del pipeline.
 
 <!-- Aquí puedes poner una imagen de la UI de Airflow con los DAGs -->
 
 ### Jupyter — `http://localhost:8082?token=mlops_token`
+<img width="1098" height="632" alt="image" src="https://github.com/user-attachments/assets/dedd9dbb-61ff-4c0f-8b57-9a61f51667f0" />
 
 Aquí puedes ver y editar el notebook de entrenamiento `train_model.ipynb`.
 
@@ -125,12 +127,14 @@ Aquí puedes ver y editar el notebook de entrenamiento `train_model.ipynb`.
 
 ### MinIO — `http://localhost:8083`
 Usuario: `minioadmin` | Contraseña: `minioadmin`
+<img width="1703" height="613" alt="image" src="https://github.com/user-attachments/assets/5e2cf83f-eb60-4286-9112-a26110eae203" />
 
 Aquí puedes ver los modelos entrenados almacenados en el bucket `models/group_4/`.
 
 <!-- Aquí puedes poner una imagen de MinIO con los modelos -->
 
 ### Inference API — `http://localhost:8084/docs`
+<img width="1559" height="886" alt="image" src="https://github.com/user-attachments/assets/acc44371-c512-473c-b0b3-75eea9388a5d" />
 
 Aquí puedes probar la API de predicción usando el Swagger UI.
 
