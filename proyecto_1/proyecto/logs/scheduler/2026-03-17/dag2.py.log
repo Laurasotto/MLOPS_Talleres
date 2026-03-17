@@ -2982,3 +2982,87 @@
 [2026-03-17T03:43:26.280+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:43:26.280+0000] {dag.py:2726} INFO - Sync 1 DAGs
 [2026-03-17T03:43:26.290+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:43:26.290+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-17T03:40:00+00:00, run_after=2026-03-17T03:45:00+00:00
 [2026-03-17T03:43:26.295+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.338 seconds
+[2026-03-17T03:43:56.338+0000] {processor.py:156} INFO - Started process (PID=64344) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T03:43:56.339+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T03:43:56.340+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:43:56.339+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T03:43:56.665+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T03:43:56.674+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:43:56.674+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:43:56.683+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:43:56.683+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-17T03:40:00+00:00, run_after=2026-03-17T03:45:00+00:00
+[2026-03-17T03:43:56.688+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.354 seconds
+[2026-03-17T03:44:26.752+0000] {processor.py:156} INFO - Started process (PID=64376) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T03:44:26.753+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T03:44:26.753+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:44:26.753+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T03:44:27.075+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T03:44:27.085+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:44:27.084+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:44:27.093+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:44:27.093+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-17T03:40:00+00:00, run_after=2026-03-17T03:45:00+00:00
+[2026-03-17T03:44:27.099+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.351 seconds
+[2026-03-17T03:44:58.095+0000] {processor.py:156} INFO - Started process (PID=64408) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T03:44:58.096+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T03:44:58.097+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:44:58.097+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T03:44:58.440+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T03:44:58.450+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:44:58.450+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:44:58.462+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:44:58.462+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-17T03:40:00+00:00, run_after=2026-03-17T03:45:00+00:00
+[2026-03-17T03:44:58.468+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.377 seconds
+[2026-03-17T03:45:29.367+0000] {processor.py:156} INFO - Started process (PID=64500) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T03:45:29.368+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T03:45:29.369+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:45:29.369+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T03:45:29.680+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T03:45:29.690+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:45:29.690+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:45:29.699+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:45:29.699+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-17T03:45:00+00:00, run_after=2026-03-17T03:50:00+00:00
+[2026-03-17T03:45:29.704+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.344 seconds
+[2026-03-17T03:45:59.742+0000] {processor.py:156} INFO - Started process (PID=64532) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T03:45:59.743+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T03:45:59.744+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:45:59.744+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T03:46:00.033+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T03:46:00.042+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:46:00.042+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:46:00.052+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:46:00.052+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-17T03:45:00+00:00, run_after=2026-03-17T03:50:00+00:00
+[2026-03-17T03:46:00.058+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.318 seconds
+[2026-03-17T03:46:30.096+0000] {processor.py:156} INFO - Started process (PID=64564) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T03:46:30.097+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T03:46:30.097+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:46:30.097+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T03:46:30.440+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T03:46:30.449+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:46:30.448+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:46:30.457+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:46:30.457+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-17T03:45:00+00:00, run_after=2026-03-17T03:50:00+00:00
+[2026-03-17T03:46:30.463+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.369 seconds
+[2026-03-17T03:47:01.383+0000] {processor.py:156} INFO - Started process (PID=64596) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T03:47:01.384+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T03:47:01.384+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:47:01.384+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T03:47:01.699+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T03:47:01.709+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:47:01.708+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:47:01.719+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:47:01.719+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-17T03:45:00+00:00, run_after=2026-03-17T03:50:00+00:00
+[2026-03-17T03:47:01.725+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.344 seconds
+[2026-03-17T03:47:31.773+0000] {processor.py:156} INFO - Started process (PID=64628) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T03:47:31.774+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T03:47:31.774+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:47:31.774+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T03:47:32.068+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T03:47:32.077+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:47:32.077+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:47:32.086+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:47:32.086+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-17T03:45:00+00:00, run_after=2026-03-17T03:50:00+00:00
+[2026-03-17T03:47:32.092+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.322 seconds
+[2026-03-17T03:48:02.129+0000] {processor.py:156} INFO - Started process (PID=64660) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T03:48:02.130+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T03:48:02.133+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:48:02.133+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T03:48:02.446+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T03:48:02.456+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:48:02.456+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:48:02.465+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:48:02.464+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-17T03:45:00+00:00, run_after=2026-03-17T03:50:00+00:00
+[2026-03-17T03:48:02.470+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.345 seconds
+[2026-03-17T03:48:33.472+0000] {processor.py:156} INFO - Started process (PID=64692) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T03:48:33.473+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T03:48:33.473+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:48:33.473+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T03:48:33.782+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T03:48:33.791+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:48:33.791+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:48:33.800+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:48:33.800+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-17T03:45:00+00:00, run_after=2026-03-17T03:50:00+00:00
+[2026-03-17T03:48:33.806+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.337 seconds
+[2026-03-17T03:49:04.772+0000] {processor.py:156} INFO - Started process (PID=64724) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T03:49:04.772+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T03:49:04.772+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:49:04.772+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T03:49:05.067+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T03:49:05.076+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:49:05.076+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:49:05.086+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:49:05.085+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-17T03:45:00+00:00, run_after=2026-03-17T03:50:00+00:00
+[2026-03-17T03:49:05.092+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.323 seconds
+[2026-03-17T03:49:36.062+0000] {processor.py:156} INFO - Started process (PID=64756) to work on /opt/airflow/dags/dag2.py
+[2026-03-17T03:49:36.063+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/dag2.py for tasks to queue
+[2026-03-17T03:49:36.063+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:49:36.063+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/dag2.py
+[2026-03-17T03:49:36.360+0000] {processor.py:809} INFO - DAG(s) dict_keys(['dag_mlops_full_pipeline']) retrieved from /opt/airflow/dags/dag2.py
+[2026-03-17T03:49:36.369+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:49:36.369+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-03-17T03:49:36.380+0000] {logging_mixin.py:149} INFO - [2026-03-17T03:49:36.379+0000] {dag.py:3490} INFO - Setting next_dagrun for dag_mlops_full_pipeline to 2026-03-17T03:45:00+00:00, run_after=2026-03-17T03:50:00+00:00
+[2026-03-17T03:49:36.387+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/dag2.py took 0.327 seconds
