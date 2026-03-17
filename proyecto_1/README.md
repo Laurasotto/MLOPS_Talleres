@@ -24,6 +24,7 @@ El sistema está compuesto por los siguientes servicios corriendo en Docker Comp
 | **Jupyter** | Entrenamiento del modelo | `8082` |
 | **MinIO** | Almacenamiento de modelos | `8083` |
 | **Inference API** | API de predicción (FastAPI) | `8084` |
+<img width="1187" height="717" alt="image" src="https://github.com/user-attachments/assets/d912cf12-863a-492c-8b08-f510b26a2f21" />
 
 
 ---
