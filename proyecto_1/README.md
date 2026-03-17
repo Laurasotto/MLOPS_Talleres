@@ -100,7 +100,7 @@ docker ps
 ```
 
 Deberías ver activos: `postgres`, `airflow-webserver`, `airflow-scheduler`, `airflow-triggerer`, `jupyter`, `minio` y `inference-api`.
-
+# Importante
 El docker-compose.yaml original del proyecto usaba CeleryExecutor, que requiere Redis para distribuir las tareas entre workers. Para simplificar el despliegue y eliminar la dependencia de Redis, migramos a LocalExecutor, que ejecuta las tareas directamente en el proceso del scheduler sin necesidad de servicios adicionales. Si al levantar el sistema el scheduler no arranca o los DAGs no aparecen, verifica que la variable AIRFLOW__CORE__EXECUTOR en el docker-compose.yaml esté configurada como LocalExecutor y no como CeleryExecutor.
 
 ---
