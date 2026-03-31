@@ -1,0 +1,141 @@
+version: '3.8'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Taller MLflow
+# Puertos usados (distintos al proyecto anterior):
+#   PostgreSQL  → 5433  (el anterior usa 5432)
+#   MinIO API   → 9002  (el anterior usa 9000)
+#   MinIO UI    → 9003  (el anterior usa 8083)
+#   MLflow      → 5001  (cambiado de 5000 por conflicto con AirPlay en Mac)
+#   JupyterLab  → 8890  (el anterior usa 8082)
+#   API         → 8000  (nueva)
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── 1. PostgreSQL (para MLflow, NO SQLite) ───────────────────────────────
+  postgres:
+    image: postgres:13
+    container_name: mlflow_postgres
+    environment:
+      POSTGRES_USER: mlops
+      POSTGRES_PASSWORD: mlops1234
+      POSTGRES_DB: mlflow_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "mlops", "-d", "mlflow_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── 2. MinIO (almacenamiento de artefactos tipo S3) ───────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: mlflow_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: supersecret
+    ports:
+      - "9002:9000"   # API de MinIO
+      - "9003:9001"   # UI de MinIO
+    volumes:
+      - ./minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── 3. Crea el bucket mlflows3 automáticamente al iniciar ────────────────
+  minio_setup:
+    image: minio/mc
+    container_name: mlflow_minio_setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 admin supersecret &&
+      mc mb --ignore-existing myminio/mlflows3 &&
+      echo 'Bucket mlflows3 creado OK'
+      "
+    restart: on-failure
+
+  # ── 4. Servidor MLflow (backend: PostgreSQL, artefactos: MinIO) ──────────
+  mlflow:
+    image: python:3.9-slim
+    container_name: mlflow_server
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: supersecret
+    ports:
+      - "5001:5000"   # accede en http://localhost:5001
+    command: >
+      bash -c "
+      pip install mlflow==2.3.0 psycopg2-binary boto3 --quiet &&
+      mlflow server
+      --backend-store-uri postgresql://mlops:mlops1234@postgres:5432/mlflow_db
+      --default-artifact-root s3://mlflows3/artifacts
+      --host 0.0.0.0
+      --port 5000
+      --serve-artifacts
+      "
+    restart: unless-stopped
+
+  # ── 5. JupyterLab (para correr el notebook del taller) ───────────────────
+  jupyter:
+    build: .
+    container_name: mlflow_jupyter
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: supersecret
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: mlops
+      DB_PASSWORD: mlops1234
+      DB_NAME: mlflow_db
+    ports:
+      - "8890:8888"   # accede en http://localhost:8890
+    volumes:
+      - .:/work       # todo lo que esté en esta carpeta aparece en JupyterLab
+    depends_on:
+      - mlflow
+    restart: unless-stopped
+
+ # ── 6. API de inferencia ────────────────────────────────────────────────
+  api:
+    build: .
+    container_name: mlflow_api
+    entrypoint: ["bash", "-c"]
+    command: >
+      "pip install fastapi uvicorn --quiet &&
+       uvicorn api:app --host 0.0.0.0 --port 8000"
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: supersecret
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/work
+    working_dir: /work
+    depends_on:
+      - mlflow
+    restart: unless-stopped
+
+volumes: {}

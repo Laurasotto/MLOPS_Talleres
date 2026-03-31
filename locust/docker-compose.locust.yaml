@@ -1,0 +1,44 @@
+version: '3.8'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Taller Locust — pruebas de carga
+# Este compose levanta la API de inferencia + Locust para stress testing.
+# Locust UI disponible en http://localhost:8089
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── API de inferencia (imagen de DockerHub con recursos limitados) ────────
+  inference-api:
+    image: thomasriverafonseca/mlflow-api:latest
+    container_name: locust_inference_api
+    entrypoint: ["bash", "-c"]
+    command: >
+      "pip install fastapi uvicorn mlflow==2.3.0 boto3 --quiet &&
+       uvicorn api:app --host 0.0.0.0 --port 8000"
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://host.docker.internal:9002
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: supersecret
+      MLFLOW_TRACKING_URI: http://host.docker.internal:5001
+    ports:
+      - "8001:8000"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"   # ajustar para encontrar el mínimo que soporta 10.000 usuarios
+          memory: 512M
+    restart: unless-stopped
+
+  # ── Locust (herramienta de pruebas de carga) ──────────────────────────────
+  locust:
+    image: locustio/locust:latest
+    container_name: locust_master
+    ports:
+      - "8089:8089"     # UI de Locust en http://localhost:8089
+    volumes:
+      - .:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --host http://inference-api:8000
+    depends_on:
+      - inference-api
+    restart: unless-stopped
