@@ -70,7 +70,8 @@ docker compose ps
   <img width="1487" height="332" alt="image" src="https://github.com/user-attachments/assets/9b511da4-70e1-4d9b-aff1-1c9b7c012a4e" />
   <img width="316" height="44" alt="image" src="https://github.com/user-attachments/assets/0f150bb9-fd1a-4532-92c0-c698d1e3312a" />
   <img width="418" height="603" alt="image" src="https://github.com/user-attachments/assets/da27ce3b-3819-41b7-ac67-4c099f33808a" />
-   Descarga el archivo CSV
+  
+  Descarga el archivo CSV
   <img width="1442" height="490" alt="image" src="https://github.com/user-attachments/assets/80f99aa0-d84a-4756-8b24-6075ff0abe38" />
 
 
