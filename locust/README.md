@@ -88,6 +88,14 @@ Todas las pruebas se realizaron con la API limitada a **0.5 CPU y 512MB de memor
   <img width="1527" height="986" alt="image" src="https://github.com/user-attachments/assets/a1480d2e-a2f3-4992-96a7-6933fad9c880" />
 - 1000 usuarios
   <img width="1153" height="839" alt="image" src="https://github.com/user-attachments/assets/3bcd260e-342c-4397-b567-fd78645e615e" />
+- 2000 usuarios
+  <img width="1523" height="998" alt="image" src="https://github.com/user-attachments/assets/c570f532-85a8-4f0e-bb29-5192af8317e6" />
+- 5000 usuarios
+  <img width="1043" height="860" alt="image" src="https://github.com/user-attachments/assets/f8396769-675b-40c5-97c0-c3ad098be29a" />
+- 10000 usuarios
+  <img width="1493" height="862" alt="image" src="https://github.com/user-attachments/assets/45d57942-fb50-41d5-8077-691a3bfc4177" />
+
+
 
 ### 3 réplicas con nginx
 
