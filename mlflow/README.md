@@ -56,9 +56,11 @@ docker compose ps
 - **API docs**: http://localhost:8000/docs
 
 
-
+## PRUEBA
 - docker logs mlflow_jupyter 2>&1 | grep token
-- <img width="869" height="54" alt="image" src="https://github.com/user-attachments/assets/50581d95-5fd2-4b52-a055-ea5d4367532e" />
+ <img width="869" height="54" alt="image" src="https://github.com/user-attachments/assets/50581d95-5fd2-4b52-a055-ea5d4367532e" />
+ <img width="1077" height="699" alt="image" src="https://github.com/user-attachments/assets/8aab5a6b-1535-4c22-a589-857220cc28c5" />
+- correr taller_mlflow.ipynb
 
 ## Experimentos
 
