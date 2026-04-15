@@ -84,6 +84,11 @@ Todas las pruebas se realizaron con la API limitada a **0.5 CPU y 512MB de memor
 | 5000     | 216 | 0%     | 7551          | 28000    |
 | 10000    | 143 | 0%     | 9528          | 33000    |
 
+- 500 usuarios
+  <img width="1527" height="986" alt="image" src="https://github.com/user-attachments/assets/a1480d2e-a2f3-4992-96a7-6933fad9c880" />
+- 1000 usuarios
+  <img width="1153" height="839" alt="image" src="https://github.com/user-attachments/assets/3bcd260e-342c-4397-b567-fd78645e615e" />
+
 ### 3 réplicas con nginx
 
 | Usuarios | RPS | Fallos | Promedio (ms) | P99 (ms) |
