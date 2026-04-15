@@ -55,6 +55,11 @@ docker compose ps
 - **JupyterLab**: http://localhost:8890 — el token se obtiene con `docker logs mlflow_jupyter 2>&1 | grep token`
 - **API docs**: http://localhost:8000/docs
 
+
+
+- docker logs mlflow_jupyter 2>&1 | grep token
+- <img width="869" height="54" alt="image" src="https://github.com/user-attachments/assets/50581d95-5fd2-4b52-a055-ea5d4367532e" />
+
 ## Experimentos
 
 El notebook `taller_mlflow.ipynb` realiza el flujo completo:
