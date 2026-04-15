@@ -62,6 +62,8 @@ docker compose ps
  <img width="1077" height="699" alt="image" src="https://github.com/user-attachments/assets/8aab5a6b-1535-4c22-a589-857220cc28c5" />
 
 - Correr taller_mlflow.ipynb
+  Importante tener en cuenta que en este paso se está trabajando con los hiperparametros: <img width="596" height="117" alt="image" src="https://github.com/user-attachments/assets/c01d6926-192e-43bd-903e-732781773151" />
+
 
 - Ir a mlflow
   <img width="1370" height="539" alt="image" src="https://github.com/user-attachments/assets/f85e1d2e-3df2-4039-8b2b-fa4325c90dc5" />
