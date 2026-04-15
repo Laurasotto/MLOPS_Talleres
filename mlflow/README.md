@@ -61,11 +61,18 @@ docker compose ps
  <img width="869" height="54" alt="image" src="https://github.com/user-attachments/assets/50581d95-5fd2-4b52-a055-ea5d4367532e" />
  <img width="1077" height="699" alt="image" src="https://github.com/user-attachments/assets/8aab5a6b-1535-4c22-a589-857220cc28c5" />
 
-- correr taller_mlflow.ipynb
+- Correr taller_mlflow.ipynb
 
-- ir a mlflow
+- Ir a mlflow
   <img width="1370" height="539" alt="image" src="https://github.com/user-attachments/assets/f85e1d2e-3df2-4039-8b2b-fa4325c90dc5" />
  <img width="1487" height="332" alt="image" src="https://github.com/user-attachments/assets/9b511da4-70e1-4d9b-aff1-1c9b7c012a4e" />
+ - Ir a la API
+```bash
+(http://localhost:8000/docs#/default/predict_predict_post)
+```
+<img width="1067" height="885" alt="image" src="https://github.com/user-attachments/assets/16b73e12-6d56-4978-9a0d-750a2251c5a9" />
+
+   
 
 
 ## Experimentos
