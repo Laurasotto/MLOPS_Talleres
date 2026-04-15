@@ -65,7 +65,8 @@ docker compose ps
 
 - ir a mlflow
   <img width="1370" height="539" alt="image" src="https://github.com/user-attachments/assets/f85e1d2e-3df2-4039-8b2b-fa4325c90dc5" />
- 
+ <img width="1487" height="332" alt="image" src="https://github.com/user-attachments/assets/9b511da4-70e1-4d9b-aff1-1c9b7c012a4e" />
+
 
 ## Experimentos
 
