@@ -93,13 +93,13 @@ EXAMPLE = {
 }
 
 # ── Session state ─────────────────────────────
-if "values" not in st.session_state:
-    st.session_state.values = dict(EXAMPLE)
+if "form_values" not in st.session_state:
+    st.session_state["form_values"] = dict(EXAMPLE)
 
 col_load, _ = st.columns([1, 5])
 with col_load:
     if st.button("Load example values"):
-        st.session_state.values = dict(EXAMPLE)
+        st.session_state["form_values"] = dict(EXAMPLE)
         st.rerun()
 
 # ── Input form ───────────────────────────────
@@ -109,7 +109,7 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown("**Hospital stay**")
-    v = st.session_state.values
+    v = st.session_state["form_values"]
     time_in_hospital = st.number_input("Time in hospital (days)", 1, 14, int(v["time_in_hospital"]))
     num_lab_procedures = st.number_input("Lab procedures", 0, 200, int(v["num_lab_procedures"]))
     num_procedures = st.number_input("Procedures", 0, 10, int(v["num_procedures"]))
