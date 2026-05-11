@@ -10,8 +10,10 @@ metadata:
   name: prometheus-mlops-p2
 rules:
   - apiGroups: [""]
-    resources: ["nodes", "pods", "services", "endpoints"]
+    resources: ["nodes", "nodes/metrics", "pods", "services", "endpoints"]
     verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics", "/metrics/cadvisor"]
+    verbs: ["get"]
   - apiGroups: ["extensions", "networking.k8s.io"]
     resources: ["ingresses"]
     verbs: ["get", "list", "watch"]
