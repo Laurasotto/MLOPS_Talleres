@@ -83,9 +83,13 @@ def get_engine():
 def ensure_schemas(engine):
     # engine.begin() auto-commits on exit (SQLAlchemy 1.4 — conn.commit() not available without future=True)
     with engine.begin() as conn:
+        log.info(">>> [ensure_schemas] Creando schema 'raw_data' si no existe...")
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS raw_data"))
+        log.info(">>> [ensure_schemas] Creando schema 'clean_data' si no existe...")
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS clean_data"))
+        log.info(">>> [ensure_schemas] Creando schema 'inference_logs' si no existe...")
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS inference_logs"))
+        log.info(">>> [ensure_schemas] Creando tabla 'raw_data.batch_state' si no existe (tracking de batches cargados)...")
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS raw_data.batch_state (
                 id              SERIAL PRIMARY KEY,
@@ -97,6 +101,7 @@ def ensure_schemas(engine):
                 updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """))
+        log.info(">>> [ensure_schemas] Creando tabla 'raw_data.diabetes_raw' si no existe (datos crudos del CSV)...")
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS raw_data.diabetes_raw (
                 id                          SERIAL PRIMARY KEY,
@@ -156,6 +161,7 @@ def ensure_schemas(engine):
                 created_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """))
+        log.info(">>> [ensure_schemas] Creando tabla 'clean_data.diabetes_clean' si no existe (datos procesados para entrenamiento)...")
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS clean_data.diabetes_clean (
                 id                               SERIAL PRIMARY KEY,
@@ -209,24 +215,27 @@ def ensure_schemas(engine):
                 created_at                       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """))
+        log.info(">>> [ensure_schemas] Todos los schemas y tablas base están listos: raw_data.batch_state, raw_data.diabetes_raw, clean_data.diabetes_clean.")
 
 
 # ──────────────────────────────────────────────
 # Task 1: Validate source file
 # ──────────────────────────────────────────────
 def task_validate_source(**context):
+    log.info(">>> [validate_source] Verificando que el archivo fuente existe en %s", DATA_PATH)
     if not os.path.isfile(DATA_PATH):
         raise FileNotFoundError(
             f"Dataset not found at {DATA_PATH}. "
             "Mount the file into the Airflow container at this path."
         )
+    log.info(">>> [validate_source] Archivo encontrado. Leyendo encabezado para verificar columnas...")
     df = pd.read_csv(DATA_PATH, nrows=5)
     required_cols = {"readmitted", "age", "gender", "admission_type_id"}
     missing = required_cols - set(df.columns)
     if missing:
         raise ValueError(f"CSV missing required columns: {missing}")
     total = sum(1 for _ in open(DATA_PATH)) - 1  # subtract header
-    log.info("Source file validated. Estimated rows: %d", total)
+    log.info(">>> [validate_source] OK — archivo validado. Columnas correctas. Total de filas estimado: %d", total)
     context["ti"].xcom_push(key="total_rows", value=total)
 
 
@@ -234,21 +243,26 @@ def task_validate_source(**context):
 # Task 2: Load batch into raw table
 # ──────────────────────────────────────────────
 def task_load_batch(**context):
+    log.info(">>> [load_batch] Conectando a la base de datos PostgreSQL...")
     engine = get_engine()
     ensure_schemas(engine)
+    log.info(">>> [load_batch] Schemas y tablas verificados/creados correctamente.")
 
+    log.info(">>> [load_batch] Consultando el estado del último batch cargado...")
     with engine.connect() as conn:
         result = conn.execute(
             text("SELECT COALESCE(MAX(batch_id), 0), COALESCE(MAX(last_row_loaded), 0) FROM raw_data.batch_state")
         ).fetchone()
         prev_batch_id, rows_loaded_so_far = result[0], result[1]
+    log.info(">>> [load_batch] Último batch: %d | Filas ya cargadas: %d", prev_batch_id, rows_loaded_so_far)
 
     # Count rows by streaming the file — avoids loading the full CSV into RAM
     with open(DATA_PATH) as f:
         total_rows = sum(1 for _ in f) - 1  # subtract header
+    log.info(">>> [load_batch] Total de filas en el CSV: %d", total_rows)
 
     if rows_loaded_so_far >= total_rows:
-        log.info("All %d rows already loaded. Skipping batch load.", total_rows)
+        log.info(">>> [load_batch] Todas las filas ya fueron cargadas. No hay datos nuevos para este batch.")
         context["ti"].xcom_push(key="batch_id", value=prev_batch_id)
         context["ti"].xcom_push(key="rows_in_batch", value=0)
         context["ti"].xcom_push(key="all_loaded", value=True)
@@ -257,10 +271,12 @@ def task_load_batch(**context):
     batch_id = prev_batch_id + 1
     start_row = rows_loaded_so_far
     end_row = min(start_row + BATCH_SIZE, total_rows)
+    log.info(">>> [load_batch] Preparando batch %d: filas %d a %d (%d registros a cargar)", batch_id, start_row, end_row, end_row - start_row)
 
     # Read only the batch rows — skiprows skips already-loaded data rows (keeps header)
     skip = range(1, start_row + 1) if start_row > 0 else None
     batch_df = pd.read_csv(DATA_PATH, dtype=str, skiprows=skip, nrows=BATCH_SIZE)
+    log.info(">>> [load_batch] Batch leído del CSV. Calculando hashes para deduplicación...")
 
     log.info(
         "Loading batch %d: rows %d-%d (%d records)",
@@ -310,6 +326,7 @@ def task_load_batch(**context):
 
     insert_df = batch_df[[c for c in db_cols if c in batch_df.columns]]
 
+    log.info(">>> [load_batch] Insertando %d filas en raw_data.diabetes_raw (duplicados ignorados por row_hash)...", len(insert_df))
     # engine.begin() auto-commits on exit (SQLAlchemy 1.4 compatibility)
     with engine.begin() as conn:
         for _, row in insert_df.iterrows():
@@ -336,7 +353,8 @@ def task_load_batch(**context):
             {"bid": batch_id, "loaded": end_row, "total": total_rows},
         )
 
-    log.info("Batch %d loaded successfully (%d rows).", batch_id, len(batch_df))
+    log.info(">>> [load_batch] Actualizando batch_state con batch_id=%d, filas_cargadas=%d/%d", batch_id, end_row, total_rows)
+    log.info(">>> [load_batch] COMPLETADO — Batch %d insertado exitosamente (%d filas). Progreso total: %d/%d filas del dataset.", batch_id, len(batch_df), end_row, total_rows)
     context["ti"].xcom_push(key="batch_id", value=batch_id)
     context["ti"].xcom_push(key="rows_in_batch", value=len(batch_df))
     context["ti"].xcom_push(key="all_loaded", value=(end_row >= total_rows))
@@ -350,32 +368,57 @@ def task_validate_quality(**context):
     rows_in_batch = context["ti"].xcom_pull(key="rows_in_batch", task_ids="load_batch")
 
     if rows_in_batch == 0:
-        log.info("No new rows in batch — skipping quality validation.")
+        log.info(">>> [validate_quality] No hay filas nuevas en este batch — omitiendo validación.")
         return
 
+    log.info(">>> [validate_quality] Conectando a la BD para leer el batch %d recién cargado...", batch_id)
     engine = get_engine()
     with engine.connect() as conn:
         result = conn.execute(text("SELECT * FROM raw_data.diabetes_raw WHERE batch_id = :bid"), {"bid": batch_id})
         df = pd.DataFrame(result.fetchall(), columns=result.keys())
 
-    log.info("Quality check on %d rows for batch %d", len(df), batch_id)
+    log.info(">>> [validate_quality] %d filas leídas de raw_data.diabetes_raw para batch %d.", len(df), batch_id)
+    log.info(">>> [validate_quality] ─────────────────────────────────────────")
+    log.info(">>> [validate_quality] CHEQUEO 1: Valores válidos en columna 'readmitted'")
+    log.info(">>> [validate_quality]   Valores esperados: <30, >30, NO")
 
-    # Check readmitted values
     valid_readmitted = {"<30", ">30", "NO"}
     invalid_mask = ~df["readmitted"].isin(valid_readmitted)
+    readmitted_counts = df["readmitted"].value_counts().to_dict()
+    log.info(">>> [validate_quality]   Distribución encontrada: %s", readmitted_counts)
     if invalid_mask.sum() > 0:
-        log.warning("%d rows with unexpected readmitted values", invalid_mask.sum())
+        log.warning(">>> [validate_quality]   ADVERTENCIA: %d filas con valores fuera del rango esperado.", invalid_mask.sum())
+    else:
+        log.info(">>> [validate_quality]   Resultado: OK — todos los valores son válidos.")
 
-    # Check gender
+    log.info(">>> [validate_quality] ─────────────────────────────────────────")
+    log.info(">>> [validate_quality] CHEQUEO 2: Valores válidos en columna 'gender'")
+    log.info(">>> [validate_quality]   Valores esperados: Male, Female, Unknown/Invalid")
+
     valid_genders = {"Male", "Female", "Unknown/Invalid"}
     inv_gender = ~df["gender"].isin(valid_genders)
+    gender_counts = df["gender"].value_counts().to_dict()
+    log.info(">>> [validate_quality]   Distribución encontrada: %s", gender_counts)
     if inv_gender.sum() > 0:
-        log.warning("%d rows with unexpected gender values", inv_gender.sum())
+        log.warning(">>> [validate_quality]   ADVERTENCIA: %d filas con valores inesperados en gender.", inv_gender.sum())
+    else:
+        log.info(">>> [validate_quality]   Resultado: OK — todos los valores son válidos.")
 
+    log.info(">>> [validate_quality] ─────────────────────────────────────────")
+    log.info(">>> [validate_quality] CHEQUEO 3: Valores nulos por columna")
+    null_counts = df.isnull().sum()
+    cols_with_nulls = null_counts[null_counts > 0]
+    if len(cols_with_nulls) > 0:
+        for col, cnt in cols_with_nulls.items():
+            log.info(">>> [validate_quality]   %s: %d nulos (%.1f%%)", col, cnt, cnt / len(df) * 100)
+    else:
+        log.info(">>> [validate_quality]   Sin valores nulos detectados.")
     null_pct = df.isnull().mean().max()
-    log.info("Max null percentage across columns: %.2f%%", null_pct * 100)
+    log.info(">>> [validate_quality]   Porcentaje máximo de nulos en una sola columna: %.2f%%", null_pct * 100)
 
-    log.info("Quality validation complete for batch %d", batch_id)
+    log.info(">>> [validate_quality] ─────────────────────────────────────────")
+    log.info(">>> [validate_quality] COMPLETADO — Batch %d validado: %d filas revisadas, %d columnas chequeadas.",
+             batch_id, len(df), len(df.columns))
 
 
 # ──────────────────────────────────────────────
@@ -474,25 +517,24 @@ def task_preprocess(**context):
     rows_in_batch = context["ti"].xcom_pull(key="rows_in_batch", task_ids="load_batch")
 
     if rows_in_batch == 0:
-        log.info("No new rows — skipping preprocessing.")
+        log.info(">>> [preprocess] No hay filas nuevas — omitiendo preprocesamiento.")
         return
 
+    log.info(">>> [preprocess] Leyendo %d filas crudas del batch %d desde raw_data.diabetes_raw...", rows_in_batch, batch_id)
     engine = get_engine()
     with engine.connect() as conn:
         result = conn.execute(text("SELECT * FROM raw_data.diabetes_raw WHERE batch_id = :bid"), {"bid": batch_id})
         raw_df = pd.DataFrame(result.fetchall(), columns=result.keys())
 
-    log.info("Preprocessing %d raw rows for batch %d", len(raw_df), batch_id)
-
-    # Preserve raw_id mapping
+    log.info(">>> [preprocess] Aplicando transformaciones: codificando edad, raza, género, medicamentos, diagnósticos...")
     raw_ids = raw_df["id"].tolist()
     processed = preprocess_df(raw_df, batch_id)
 
-    # Select only the feature columns + target + metadata
     out_cols = ["batch_id"] + FEATURE_COLS + [TARGET_COL]
     processed = processed[[c for c in out_cols if c in processed.columns]]
-    processed["raw_id"] = None  # we don't do row-level mapping here
+    processed["raw_id"] = None
 
+    log.info(">>> [preprocess] Transformación completada. Insertando %d filas limpias en clean_data.diabetes_clean...", len(processed))
     # to_sql incompatible with SQLAlchemy 1.4 + pandas 2.2 — use bulk INSERT via conn.execute
     records = processed.where(pd.notnull(processed), None).to_dict(orient="records")
     if records:
@@ -502,7 +544,7 @@ def task_preprocess(**context):
         with engine.begin() as conn:
             conn.execute(text(f"INSERT INTO clean_data.diabetes_clean ({col_str}) VALUES ({val_str})"), records)
 
-    log.info("Stored %d clean rows for batch %d", len(processed), batch_id)
+    log.info(">>> [preprocess] COMPLETADO — %d filas limpias guardadas en clean_data para batch %d.", len(processed), batch_id)
     context["ti"].xcom_push(key="clean_rows", value=len(processed))
 
 
@@ -512,11 +554,13 @@ def task_preprocess(**context):
 def task_split_data(**context):
     batch_id = context["ti"].xcom_pull(key="batch_id", task_ids="load_batch")
 
+    log.info(">>> [split_data] Leyendo todos los datos limpios acumulados desde clean_data.diabetes_clean...")
     engine = get_engine()
     with engine.connect() as conn:
         result = conn.execute(text("SELECT * FROM clean_data.diabetes_clean"))
         df = pd.DataFrame(result.fetchall(), columns=result.keys())
 
+    log.info(">>> [split_data] %d filas totales disponibles para entrenamiento (acumulado de todos los batches).", len(df))
     log.info("Splitting %d total clean rows (split_version=%d)", len(df), batch_id)
 
     feature_cols = [c for c in FEATURE_COLS if c in df.columns]
@@ -561,10 +605,14 @@ def task_split_data(**context):
                 )
             """))
 
+    log.info(">>> [split_data] Dividiendo: 70%% train / 15%% validación / 15%% test (stratified)...")
+    log.info(">>> [split_data] Guardando splits en diabetes_train, diabetes_val, diabetes_test...")
     save_split(X_train, y_train, "diabetes_train")
     save_split(X_val, y_val, "diabetes_val")
     save_split(X_test, y_test, "diabetes_test")
 
+    log.info(">>> [split_data] COMPLETADO — train:%d | val:%d | test:%d filas guardadas.",
+        len(X_train), len(X_val), len(X_test))
     log.info(
         "Split done — train:%d val:%d test:%d",
         len(X_train), len(X_val), len(X_test)
@@ -578,6 +626,7 @@ def task_split_data(**context):
 # Task 6: Train model
 # ──────────────────────────────────────────────
 def task_train_model(**context):
+    log.info(">>> [train_model] Cargando datos de entrenamiento y validación desde la BD...")
     engine = get_engine()
 
     with engine.connect() as conn:
@@ -585,6 +634,8 @@ def task_train_model(**context):
         train_df = pd.DataFrame(r.fetchall(), columns=r.keys())
         r = conn.execute(text("SELECT * FROM clean_data.diabetes_val"))
         val_df = pd.DataFrame(r.fetchall(), columns=r.keys())
+
+    log.info(">>> [train_model] %d filas de train | %d filas de validación cargadas.", len(train_df), len(val_df))
 
     feature_cols = [c for c in FEATURE_COLS if c in train_df.columns]
     X_train = train_df[feature_cols].fillna(0)
@@ -600,9 +651,10 @@ def task_train_model(**context):
         "n_jobs": -1,
     }
 
-    log.info("Training RandomForestClassifier on %d samples...", len(X_train))
+    log.info(">>> [train_model] Entrenando RandomForestClassifier con %d árboles, profundidad máx %d...", params["n_estimators"], params["max_depth"])
     model = RandomForestClassifier(**params)
     model.fit(X_train, y_train)
+    log.info(">>> [train_model] Entrenamiento completado. Evaluando sobre el set de validación...")
 
     y_pred = model.predict(X_val)
     y_proba = model.predict_proba(X_val)[:, 1]
@@ -618,7 +670,9 @@ def task_train_model(**context):
 
     importances = dict(zip(feature_cols, model.feature_importances_.tolist()))
 
-    log.info("Validation metrics: %s", metrics)
+    log.info(">>> [train_model] COMPLETADO — Métricas de validación:")
+    for k, v in metrics.items():
+        log.info(">>>              %s = %.4f", k, v)
     context["ti"].xcom_push(key="metrics", value=metrics)
     context["ti"].xcom_push(key="params", value=params)
     context["ti"].xcom_push(key="importances", value=importances)
@@ -638,14 +692,31 @@ def task_register_mlflow(**context):
     train_size = ti.xcom_pull(key="train_size", task_ids="split_data")
     val_size = ti.xcom_pull(key="val_size", task_ids="split_data")
 
+    log.info(">>> [register_mlflow] Conectando al servidor MLflow en %s...", MLFLOW_URI)
     mlflow.set_tracking_uri(MLFLOW_URI)
 
+    # Manejo robusto del experimento: si existe y está activo lo usa, si está en estado
+    # 'deleted' (soft delete de MLflow tras dag_reset_pipeline) lo restaura primero,
+    # si no existe lo crea. Evita el error RESOURCE_ALREADY_EXISTS en reruns post-reset.
+    client_tmp = MlflowClient()
     try:
         mlflow.set_experiment(EXPERIMENT_NAME)
+        log.info(">>> [register_mlflow] Experimento '%s' activo y listo.", EXPERIMENT_NAME)
     except Exception:
-        mlflow.create_experiment(EXPERIMENT_NAME)
-        mlflow.set_experiment(EXPERIMENT_NAME)
+        all_experiments = client_tmp.search_experiments(view_type=3)  # 3 = ALL (active + deleted)
+        deleted_exp = next((e for e in all_experiments if e.name == EXPERIMENT_NAME), None)
+        if deleted_exp:
+            log.info(">>> [register_mlflow] Experimento '%s' estaba eliminado — restaurándolo...", EXPERIMENT_NAME)
+            client_tmp.restore_experiment(deleted_exp.experiment_id)
+            mlflow.set_experiment(EXPERIMENT_NAME)
+            log.info(">>> [register_mlflow] Experimento '%s' restaurado y activo.", EXPERIMENT_NAME)
+        else:
+            log.info(">>> [register_mlflow] Creando nuevo experimento '%s'...", EXPERIMENT_NAME)
+            mlflow.create_experiment(EXPERIMENT_NAME)
+            mlflow.set_experiment(EXPERIMENT_NAME)
+            log.info(">>> [register_mlflow] Experimento '%s' creado y activo.", EXPERIMENT_NAME)
 
+    log.info(">>> [register_mlflow] Cargando datos de train/val para re-entrenar el modelo final...")
     engine = get_engine()
     with engine.connect() as conn:
         r = conn.execute(text("SELECT * FROM clean_data.diabetes_train"))
@@ -664,6 +735,7 @@ def task_register_mlflow(**context):
     model = RandomForestClassifier(**rf_params, n_jobs=-1)
     model.fit(X_train, y_train)
 
+    log.info(">>> [register_mlflow] Iniciando run MLflow 'batch_%d'...", batch_id)
     with mlflow.start_run(run_name=f"batch_{batch_id}") as run:
         # Log params
         mlflow.log_param("batch_id", batch_id)
@@ -672,11 +744,11 @@ def task_register_mlflow(**context):
         for k, v in params.items():
             mlflow.log_param(k, v)
 
-        # Log metrics
+        log.info(">>> [register_mlflow] Registrando métricas en MLflow...")
         for k, v in metrics.items():
             mlflow.log_metric(k, v)
 
-        # Feature importance artifact
+        log.info(">>> [register_mlflow] Generando artefactos: confusion matrix, feature importances, classification report...")
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
             imp_path = os.path.join(tmpdir, "feature_importances.json")
@@ -704,6 +776,7 @@ def task_register_mlflow(**context):
                 json.dump(report, f, indent=2)
             mlflow.log_artifact(report_path)
 
+        log.info(">>> [register_mlflow] Subiendo artefactos a MinIO (S3)...")
         # Log model
         mlflow.sklearn.log_model(
             model,
@@ -714,7 +787,7 @@ def task_register_mlflow(**context):
 
         run_id = run.info.run_id
 
-    log.info("MLflow run %s registered for batch %d", run_id, batch_id)
+    log.info(">>> [register_mlflow] COMPLETADO — Run '%s' registrado en MLflow para batch %d. Modelo guardado en el registry como '%s'.", run_id, batch_id, MODEL_NAME)
     ti.xcom_push(key="run_id", value=run_id)
 
 
@@ -727,10 +800,11 @@ def task_promote_champion(**context):
     current_metrics = ti.xcom_pull(key="metrics", task_ids="train_model")
     current_f1 = current_metrics["f1_weighted"]
 
+    log.info(">>> [promote_champion] Conectando a MLflow para evaluar si el nuevo modelo supera al champion actual...")
+    log.info(">>> [promote_champion] F1-weighted del modelo recién entrenado: %.4f", current_f1)
     mlflow.set_tracking_uri(MLFLOW_URI)
     client = MlflowClient()
 
-    # Get the latest version of the registered model
     versions = client.search_model_versions(f"name='{MODEL_NAME}'")
     latest_version = None
     for v in sorted(versions, key=lambda x: int(x.version), reverse=True):
@@ -739,36 +813,25 @@ def task_promote_champion(**context):
             break
 
     if latest_version is None:
-        log.warning("Could not find model version for run_id=%s", run_id)
+        log.warning(">>> [promote_champion] No se encontró versión de modelo para run_id=%s", run_id)
         return
 
-    # Check if champion exists
+    log.info(">>> [promote_champion] Versión del modelo recién registrado: %s", latest_version)
+
     try:
         champion_mv = client.get_model_version_by_alias(MODEL_NAME, CHAMPION_ALIAS)
         champion_run = client.get_run(champion_mv.run_id)
         champion_f1 = float(champion_run.data.metrics.get("f1_weighted", 0.0))
-        log.info(
-            "Champion f1_weighted=%.4f | Current f1_weighted=%.4f",
-            champion_f1, current_f1
-        )
+        log.info(">>> [promote_champion] Champion actual: versión %s con F1-weighted=%.4f", champion_mv.version, champion_f1)
+        log.info(">>> [promote_champion] Comparando: nuevo=%.4f vs champion=%.4f", current_f1, champion_f1)
         if current_f1 > champion_f1:
             client.set_registered_model_alias(MODEL_NAME, CHAMPION_ALIAS, latest_version)
-            log.info(
-                "New champion: version %s (f1=%.4f > %.4f)",
-                latest_version, current_f1, champion_f1
-            )
+            log.info(">>> [promote_champion] NUEVO CHAMPION — Versión %s promovida (F1: %.4f > %.4f). Alias 'champion' actualizado.", latest_version, current_f1, champion_f1)
         else:
-            log.info(
-                "Current model (f1=%.4f) did not beat champion (f1=%.4f). Champion unchanged.",
-                current_f1, champion_f1
-            )
+            log.info(">>> [promote_champion] El modelo nuevo (F1=%.4f) no supera al champion (F1=%.4f). Champion sin cambios.", current_f1, champion_f1)
     except Exception:
-        # No champion yet — promote current model
         client.set_registered_model_alias(MODEL_NAME, CHAMPION_ALIAS, latest_version)
-        log.info(
-            "No existing champion. Promoting version %s as champion (f1=%.4f).",
-            latest_version, current_f1
-        )
+        log.info(">>> [promote_champion] No existía champion previo. Versión %s promovida como primer champion (F1=%.4f).", latest_version, current_f1)
 
 
 # ──────────────────────────────────────────────
