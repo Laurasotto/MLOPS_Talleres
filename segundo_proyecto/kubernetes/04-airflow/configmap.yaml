@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airflow-config
+  namespace: mlops-p2
+data:
+  AIRFLOW__CORE__EXECUTOR: LocalExecutor
+  AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres123@postgres-service:5432/airflow_db
+  AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+  AIRFLOW_DB_URI: postgresql://postgres:postgres123@postgres-service:5432/mlops_db
+  MLFLOW_TRACKING_URI: http://mlflow-service:5000
+  MLFLOW_S3_ENDPOINT_URL: http://minio-service:9000
+  AWS_ACCESS_KEY_ID: minioadmin
+  AWS_SECRET_ACCESS_KEY: minioadmin123
+  DATA_PATH: /opt/airflow/data/Diabetes.csv

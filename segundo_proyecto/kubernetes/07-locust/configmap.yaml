@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: locust-config
+  namespace: mlops-p2
+data:
+  LOCUST_HOST: http://api-service:8000

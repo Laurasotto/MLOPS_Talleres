@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: streamlit-config
+  namespace: mlops-p2
+data:
+  API_URL: http://api-service:8000

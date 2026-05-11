@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: locust
+  namespace: mlops-p2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: locust
+  template:
+    metadata:
+      labels:
+        app: locust
+    spec:
+      containers:
+        - name: locust
+          image: thomasriverafonseca/diabetes-locust:latest
+          command:
+            - locust
+            - -f
+            - locustfile.py
+            - --host
+            - http://api-service:8000
+            - --web-port
+            - "8089"
+          ports:
+            - containerPort: 8089
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8089
+            initialDelaySeconds: 10
+            periodSeconds: 5
