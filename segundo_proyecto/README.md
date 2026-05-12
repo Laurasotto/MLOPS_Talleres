@@ -9,6 +9,7 @@ Pipeline completo de MLOps desplegado en Kubernetes que predice si un paciente d
 
 ## Arquitectura
 Imagen generada por IA: 
+
 <img width="1147" height="758" alt="image" src="https://github.com/user-attachments/assets/721fe24c-4d0a-4b50-a0d6-7ab8a83c6206" />
 
 
@@ -137,7 +138,7 @@ kubectl cp airflow/dags/dag_reset_pipeline.py mlops-p2/$SCHED:/opt/airflow/dags/
 
 1. Abrir Airflow en http://localhost:30808
 2. Habilitar el DAG `dag_diabetes_pipeline`
-3. Clic en **Trigger DAG** (botón de play)
+3. Clic en **Trigger DAG**
 4. Cada ejecución carga 15.000 filas nuevas, las procesa, entrena un RandomForest y lo registra en MLflow
 5. La primera ejecución que complete `promote_champion` deja el modelo disponible para la API
 6. Ejecutar varias veces para simular carga incremental — cada run toma el siguiente lote
