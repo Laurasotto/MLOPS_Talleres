@@ -8,7 +8,7 @@ Thomas Rivera & Laura Sotto · 2026-1
 Pipeline completo de MLOps desplegado en Kubernetes que predice si un paciente diabético será readmitido al hospital en menos de 30 días. Los datos llegan en lotes incrementales, se procesan, se entrena un modelo, se versiona en MLflow y se sirve vía API. Todo corre en el namespace `mlops-p2` de Kubernetes.
 
 ## Arquitectura
-
+Imagen generada por IA: 
 <img width="1147" height="758" alt="image" src="https://github.com/user-attachments/assets/721fe24c-4d0a-4b50-a0d6-7ab8a83c6206" />
 
 
