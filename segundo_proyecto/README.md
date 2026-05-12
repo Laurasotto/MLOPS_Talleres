@@ -91,6 +91,7 @@ kubectl apply -f kubernetes/07-locust/
 ```
 
 ### 3. Verificar que todo corre
+<img width="909" height="202" alt="image" src="https://github.com/user-attachments/assets/e8ef3558-22a6-4243-b3a9-f08b8cad6784" />
 
 ```bash
 kubectl get pods -n mlops-p2
