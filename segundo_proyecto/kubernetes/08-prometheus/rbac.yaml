@@ -10,7 +10,7 @@ metadata:
   name: prometheus-mlops-p2
 rules:
   - apiGroups: [""]
-    resources: ["nodes", "nodes/metrics", "pods", "services", "endpoints"]
+    resources: ["nodes", "nodes/metrics", "nodes/proxy", "pods", "services", "endpoints"]
     verbs: ["get", "list", "watch"]
   - nonResourceURLs: ["/metrics", "/metrics/cadvisor"]
     verbs: ["get"]
