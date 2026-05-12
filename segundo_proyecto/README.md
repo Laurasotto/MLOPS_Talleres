@@ -9,29 +9,8 @@ Pipeline completo de MLOps desplegado en Kubernetes que predice si un paciente d
 
 ## Arquitectura
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Kubernetes · mlops-p2                       │
-│                                                                 │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐                  │
-│  │PostgreSQL│    │  MinIO   │    │  MLflow  │                  │
-│  │raw+clean │    │artifacts │    │ tracking │                  │
-│  │+infer.   │    │  store   │    │ server   │                  │
-│  └─────┬────┘    └─────┬────┘    └─────┬────┘                  │
-│        │               │               │                        │
-│  ┌─────▼───────────────▼───────────────▼────┐                  │
-│  │              Apache Airflow               │                  │
-│  │  validate→load→quality→preprocess         │                  │
-│  │  →split→train→register→champion           │                  │
-│  └───────────────────────────────────────────┘                  │
-│                                                                 │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐  ┌──────────┐   │
-│  │ FastAPI  │◄───│Streamlit │    │  Locust  │  │Prometheus│   │
-│  │/predict  │    │    UI    │    │load test │  │ +Grafana │   │
-│  │/metrics  │    │          │    │          │  │          │   │
-│  └──────────┘    └──────────┘    └──────────┘  └──────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-```
+<img width="1147" height="758" alt="image" src="https://github.com/user-attachments/assets/721fe24c-4d0a-4b50-a0d6-7ab8a83c6206" />
+
 
 ## URLs y credenciales
 
