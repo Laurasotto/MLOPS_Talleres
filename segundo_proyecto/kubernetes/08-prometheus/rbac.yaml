@@ -10,6 +10,8 @@ metadata:
   name: prometheus-mlops-p2
 rules:
   - apiGroups: [""]
+    # nodes/proxy es necesario para que Prometheus pueda acceder a cadvisor via la API de Kubernetes
+    # sin este permiso el scrape de kubernetes-cadvisor devuelve 403 Forbidden
     resources: ["nodes", "nodes/metrics", "nodes/proxy", "pods", "services", "endpoints"]
     verbs: ["get", "list", "watch"]
   - nonResourceURLs: ["/metrics", "/metrics/cadvisor"]

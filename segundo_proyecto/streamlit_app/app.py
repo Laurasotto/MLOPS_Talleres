@@ -83,7 +83,9 @@ def init_state():
 
 init_state()
 
-# Botón cargar ejemplo — actualiza las keys de los widgets directamente
+# Los widgets usan key="w_<campo>" para que al actualizar st.session_state y llamar
+# st.rerun() los widgets tomen el nuevo valor. Sin key, Streamlit ignora el session_state
+# y mantiene el valor que el usuario había ingresado.
 col_load, _ = st.columns([1, 5])
 with col_load:
     if st.button("Cargar datos de ejemplo"):

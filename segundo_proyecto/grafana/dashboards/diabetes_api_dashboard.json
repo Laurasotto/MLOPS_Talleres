@@ -578,8 +578,8 @@
       },
       "targets": [
         {
-          "expr": "rate(container_cpu_usage_seconds_total{namespace=\"mlops-p2\", container!=\"\", container!=\"POD\"}[1m]) * 100",
-          "legendFormat": "{{pod}} / {{container}}",
+          "expr": "rate(container_cpu_usage_seconds_total{namespace=\"mlops-p2\"}[1m]) * 100",
+          "legendFormat": "{{pod}}",
           "refId": "A"
         }
       ],
@@ -601,7 +601,8 @@
           "displayMode": "list",
           "placement": "bottom"
         }
-      }
+      },
+      "description": "CPU real usada por cada pod en mlops-p2. No usa filtro container porque cadvisor en este setup solo expone el label pod."
     },
     {
       "id": 12,
@@ -619,8 +620,8 @@
       },
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{namespace=\"mlops-p2\", container!=\"\", container!=\"POD\"} / 1024 / 1024",
-          "legendFormat": "{{pod}} / {{container}}",
+          "expr": "container_memory_usage_bytes{namespace=\"mlops-p2\"} / 1024 / 1024",
+          "legendFormat": "{{pod}}",
           "refId": "A"
         }
       ],
@@ -642,7 +643,8 @@
           "displayMode": "list",
           "placement": "bottom"
         }
-      }
+      },
+      "description": "Memoria real usada por cada pod en mlops-p2. No usa filtro container porque cadvisor en este setup solo expone el label pod."
     }
   ],
   "refresh": "10s",
