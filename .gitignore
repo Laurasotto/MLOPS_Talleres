@@ -5,3 +5,6 @@ logs/
 *.zip
 mlflow/postgres_data/
 mlflow/minio_data/
+mlflow/postgres_data/
+mlflow/minio_data/
+.DS_Store
