@@ -248,8 +248,6 @@ validate_source → load_batch → validate_quality → preprocess
 | `register_mlflow` | Registra parámetros, métricas, artefactos y modelo en MLflow |
 | `promote_champion` | Compara F1 con el campeón anterior — si mejora, asigna alias `champion` |
 
-El DAG es idempotente: usa hash MD5 por fila (`ON CONFLICT DO NOTHING`) para no duplicar registros si se reejcuta.
-
 ## Tablas en PostgreSQL
 
 | Schema | Tabla | Contenido |
@@ -310,6 +308,23 @@ Todas las imágenes propias están publicadas en DockerHub:
 - `thomasriverafonseca/diabetes-streamlit:latest`
 - `thomasriverafonseca/diabetes-airflow:latest`
 - `thomasriverafonseca/diabetes-locust:latest`
+
+## Recursos por pod
+
+| Pod / Deployment | Réplicas | CPU request | CPU limit | RAM request | RAM limit |
+|------------------|----------|-------------|-----------|-------------|-----------|
+| PostgreSQL | 1 | 250m | 1 | 512Mi | 1Gi |
+| MinIO | 1 | 250m | 1 | 512Mi | 1Gi |
+| MLflow | 1 | 250m | 1 | 512Mi | 1Gi |
+| Airflow Webserver | 1 | 250m | 1 | 512Mi | 1Gi |
+| Airflow Scheduler | 1 | 250m | 1 | 1Gi | 3Gi |
+| FastAPI (api) | 2 | 200m | 1 | 512Mi | 1Gi |
+| Streamlit | 1 | 100m | 500m | 256Mi | 512Mi |
+| Locust | 1 | 100m | 500m | 256Mi | 512Mi |
+| Prometheus | 1 | 100m | 500m | 256Mi | 512Mi |
+| Grafana | 1 | 100m | 500m | 256Mi | 512Mi |
+
+El Scheduler de Airflow tiene el límite de RAM más alto (3Gi) porque ejecuta las tareas del DAG en proceso — incluyendo el entrenamiento del RandomForest sobre los datos acumulados.
 
 ## Limpieza completa
 

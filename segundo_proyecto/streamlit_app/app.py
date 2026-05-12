@@ -5,12 +5,12 @@ import os
 API_URL = os.getenv("API_URL", "http://localhost:30800")
 
 st.set_page_config(
-    page_title="Predictor de Reingreso — Diabetes",
+    page_title="Predecir Reingreso por Diabetes",
     page_icon=":hospital:",
     layout="wide",
 )
 
-st.title("Predictor de Reingreso por Diabetes")
+st.title("Predecir Reingreso por Diabetes")
 st.markdown("MLOps Proyecto 2 — Pontificia Universidad Javeriana · Grupo 4")
 
 # ── Sidebar ──────────────────────────────────
