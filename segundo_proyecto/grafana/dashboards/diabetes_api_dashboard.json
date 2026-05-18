@@ -12,6 +12,7 @@
   "annotations": {
     "list": []
   },
+  "description": "Dashboard de monitoreo de la API de inferencia de readmisión de pacientes diabéticos. Aquí vemos en tiempo real cuántas predicciones se están haciendo, qué tan rápido responde la API, cuántos errores hay y cómo se distribuye la carga entre los pods.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -23,6 +24,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
+      "description": "Total acumulado de predicciones que ha recibido la API desde que arrancó (exitosas + fallidas). Esta métrica viene del Counter predict_requests_total que definimos en main.py.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -78,6 +80,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
+      "description": "Porcentaje de requests que fallaron en el último minuto. Verde = menos del 1% de errores, Amarillo = entre 1% y 5%, Rojo = más del 5%. Si está en rojo hay que revisar los logs de la API.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -141,6 +144,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
+      "description": "Tiempo promedio que tarda la API en responder un request de predicción, calculado sobre el último minuto. Verde = menos de 100ms, Amarillo = 100-500ms, Rojo = más de 500ms. Se calcula dividiendo la suma de latencias entre el número de requests.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -204,6 +208,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
+      "description": "Cantidad de requests de predicción que está recibiendo la API por segundo en este momento, promediada sobre el último minuto. Nos sirve para saber si la carga está aumentando o bajando.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -259,6 +264,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
+      "description": "Evolución en el tiempo de la tasa de requests exitosos vs fallidos (requests por segundo). Si la línea de errores sube o la de éxitos baja abruptamente, algo le está pasando a la API o al modelo.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -314,6 +320,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
+      "description": "Percentiles de latencia calculados sobre el Histogram de Prometheus. p50 = la mitad de los requests tardó menos que esto (latencia típica). p95 = el 95% tardó menos (latencia bajo carga). p99 = casi todos los requests tardaron menos que esto (peor caso real). Si p99 sube mucho mientras p50 está bien, hay requests lentos esporádicos.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -377,6 +384,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
+      "description": "Latencia promedio de la API a lo largo del tiempo. A diferencia del panel de percentiles, aquí vemos un solo número que resume el comportamiento general. Útil para detectar tendencias de degradación gradual.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -424,6 +432,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
+      "description": "Tasa de errores en el tiempo expresada como porcentaje. El 'or vector(0)' al final de la query evita que el panel quede vacío cuando no hay errores — en lugar de no mostrar nada, muestra 0%.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -471,6 +480,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
+      "description": "Requests por segundo desglosados por pod (instancia). Aquí verificamos que el load balancer esté distribuyendo el tráfico de forma equitativa entre todos los pods. Si un pod recibe mucho más que los otros, hay un problema de balanceo.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -519,6 +529,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
+      "description": "Predicciones exitosas acumuladas por pod desde que arrancaron. A diferencia del panel de tasa (por segundo), aquí vemos el total histórico — sirve para saber cuánto ha trabajado cada instancia en total y si hubo reinicios (la curva volvería a 0).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -566,6 +577,7 @@
       "id": 11,
       "title": "CPU por Pod (uso real)",
       "type": "timeseries",
+      "description": "Porcentaje de CPU que está usando cada pod en tiempo real, medido con cAdvisor. Lo calculamos con rate() sobre los segundos de CPU consumidos. Si un pod está al 100% de forma sostenida, puede ser un cuello de botella — hay que escalar o revisar la carga.",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -601,13 +613,13 @@
           "displayMode": "list",
           "placement": "bottom"
         }
-      },
-      "description": "CPU real usada por cada pod en mlops-p2. No usa filtro container porque cadvisor en este setup solo expone el label pod."
+      }
     },
     {
       "id": 12,
       "title": "RAM por Pod (uso real)",
       "type": "timeseries",
+      "description": "Memoria RAM usada por cada pod en megabytes. Dividimos los bytes entre 1024 dos veces para convertir a MB. Si la memoria sube constantemente sin bajar, puede haber un memory leak. El modelo Random Forest ocupa bastante RAM al cargarse, así que es normal ver un pico al inicio.",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -643,8 +655,7 @@
           "displayMode": "list",
           "placement": "bottom"
         }
-      },
-      "description": "Memoria real usada por cada pod en mlops-p2. No usa filtro container porque cadvisor en este setup solo expone el label pod."
+      }
     }
   ],
   "refresh": "10s",
@@ -663,7 +674,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Diabetes API \u2014 MLOps P2",
+  "title": "Diabetes API — MLOps P2",
   "uid": "diabetes-api-mlops-p2",
   "version": 1
 }
