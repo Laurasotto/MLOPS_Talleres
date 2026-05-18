@@ -1,7 +1,9 @@
+# Locust es la herramienta de load testing — simula usuarios haciendo predicciones en paralelo.
+# Solo necesita saber a qué URL apuntar para generar el tráfico de prueba.
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: locust-config
   namespace: mlops-p2
 data:
-  LOCUST_HOST: http://api-service:8000
+  LOCUST_HOST: http://api-service:8000  # la URL de la API que vamos a estresar con el test de carga

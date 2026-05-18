@@ -1,8 +1,11 @@
+# Configuración no sensible de MinIO.
+# MinIO es el almacenamiento tipo S3 que usamos para guardar los artefactos de MLflow
+# (modelos entrenados, gráficos de métricas, reportes de clasificación).
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: minio-config
   namespace: mlops-p2
 data:
-  MINIO_BROWSER: "on"
-  MINIO_BUCKET: mlflows3
+  MINIO_BROWSER: "on"        # habilita la consola web de MinIO para ver los buckets visualmente
+  MINIO_BUCKET: mlflows3     # nombre del bucket donde MLflow va a guardar sus artefactos

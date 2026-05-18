@@ -1,3 +1,9 @@
+# Dos Services para Grafana:
+# - ClusterIP: comunicación interna
+# - NodePort 30300: acceso a los dashboards desde el navegador → http://localhost:30300
+#   Credenciales: admin / admin123
+
+# Service interno
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,6 +17,7 @@ spec:
       targetPort: 3000
   type: ClusterIP
 ---
+# Service externo — para ver los dashboards desde el navegador
 apiVersion: v1
 kind: Service
 metadata:
@@ -22,5 +29,5 @@ spec:
   ports:
     - port: 3000
       targetPort: 3000
-      nodePort: 30300
+      nodePort: 30300  # → http://localhost:30300 (admin / admin123)
   type: NodePort

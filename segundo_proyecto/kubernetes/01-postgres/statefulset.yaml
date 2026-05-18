@@ -1,11 +1,15 @@
+# Usamos StatefulSet en lugar de Deployment porque PostgreSQL es stateful:
+# necesita una identidad estable y un volumen de datos persistente.
+# Un Deployment recrearía el pod con un nombre diferente y perdería el volumen asociado.
+# Con StatefulSet, el pod siempre se llama "postgres-0" y siempre usa el mismo PVC.
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
   namespace: mlops-p2
 spec:
-  serviceName: postgres-service
-  replicas: 1
+  serviceName: postgres-service  # debe coincidir con el nombre del Service de postgres
+  replicas: 1                    # una sola instancia — postgres no se escala horizontalmente así
   selector:
     matchLabels:
       app: postgres
@@ -21,31 +25,37 @@ spec:
             - containerPort: 5432
           envFrom:
             - secretRef:
-                name: postgres-secret
+                name: postgres-secret    # credenciales: usuario, contraseña y nombre de BD
             - configMapRef:
-                name: postgres-config
+                name: postgres-config    # configuración no sensible: host, puerto, directorio de datos
           volumeMounts:
             - name: postgres-data
-              mountPath: /var/lib/postgresql/data
+              mountPath: /var/lib/postgresql/data  # aquí postgres guarda sus archivos de datos
             - name: init-sql
-              mountPath: /docker-entrypoint-initdb.d
+              mountPath: /docker-entrypoint-initdb.d  # postgres ejecuta los .sql de esta carpeta al arrancar por primera vez
+          # requests: lo que Kubernetes reserva para este pod en el nodo
+          # limits: el máximo que puede usar — si lo supera, el pod puede ser limitado o reiniciado
           resources:
             requests:
-              cpu: 250m
+              cpu: 250m      # 0.25 núcleos reservados
               memory: 512Mi
             limits:
-              cpu: "1"
+              cpu: "1"       # máximo 1 núcleo
               memory: 1Gi
+          # readinessProbe: Kubernetes solo envía tráfico al pod cuando esta prueba pasa.
+          # Aquí usamos pg_isready para verificar que postgres está listo para aceptar conexiones.
           readinessProbe:
             exec:
               command:
                 - pg_isready
                 - -U
                 - postgres
-            initialDelaySeconds: 10
+            initialDelaySeconds: 10  # espera 10s antes del primer chequeo (postgres tarda en arrancar)
             periodSeconds: 5
             failureThreshold: 5
             timeoutSeconds: 5
+          # livenessProbe: si esta prueba falla repetidamente, Kubernetes reinicia el pod.
+          # Tiene un delay más largo porque postgres puede tardar más en estar completamente listo.
           livenessProbe:
             exec:
               command:
@@ -59,7 +69,7 @@ spec:
       volumes:
         - name: postgres-data
           persistentVolumeClaim:
-            claimName: postgres-pvc
+            claimName: postgres-pvc    # el volumen de 5Gi que definimos en pvc.yaml
         - name: init-sql
           configMap:
-            name: postgres-init-sql
+            name: postgres-init-sql    # el script SQL de init-configmap.yaml

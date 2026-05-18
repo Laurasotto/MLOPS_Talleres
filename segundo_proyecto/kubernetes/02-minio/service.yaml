@@ -1,3 +1,8 @@
+# MinIO necesita dos Services porque expone dos interfaces distintas:
+# - Puerto 9000: la API S3 — la usan MLflow y Airflow para guardar y leer artefactos
+# - Puerto 9001: la consola web — la usamos nosotros para ver los buckets en el navegador
+
+# Service interno para que MLflow y Airflow accedan a la API S3 de MinIO
 apiVersion: v1
 kind: Service
 metadata:
@@ -10,8 +15,10 @@ spec:
     - name: api
       port: 9000
       targetPort: 9000
-  type: ClusterIP
+  type: ClusterIP  # solo accesible dentro del cluster — correcto para la API S3
 ---
+# Service externo para acceder a la consola web de MinIO desde el navegador
+# NodePort 30901 → http://localhost:30901 en el cluster local
 apiVersion: v1
 kind: Service
 metadata:
@@ -24,5 +31,5 @@ spec:
     - name: console
       port: 9001
       targetPort: 9001
-      nodePort: 30901
+      nodePort: 30901  # puerto accesible desde fuera del cluster
   type: NodePort

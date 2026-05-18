@@ -1,3 +1,8 @@
+# Dos Services para Streamlit:
+# - ClusterIP: comunicación interna
+# - NodePort 30851: acceso a la UI desde el navegador → http://localhost:30851
+
+# Service interno
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,6 +16,7 @@ spec:
       targetPort: 8501
   type: ClusterIP
 ---
+# Service externo — la interfaz de usuario accesible desde el navegador
 apiVersion: v1
 kind: Service
 metadata:
@@ -22,5 +28,5 @@ spec:
   ports:
     - port: 8501
       targetPort: 8501
-      nodePort: 30851
+      nodePort: 30851  # → http://localhost:30851
   type: NodePort

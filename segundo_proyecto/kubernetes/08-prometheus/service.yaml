@@ -1,3 +1,8 @@
+# Dos Services para Prometheus:
+# - ClusterIP: para que Grafana se conecte a Prometheus dentro del cluster
+# - NodePort 30909: para consultar métricas directamente desde el navegador → http://localhost:30909
+
+# Service interno — Grafana usa "http://prometheus-service:9090" como datasource
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,6 +16,7 @@ spec:
       targetPort: 9090
   type: ClusterIP
 ---
+# Service externo — para explorar métricas con PromQL directamente desde el navegador
 apiVersion: v1
 kind: Service
 metadata:
@@ -22,5 +28,5 @@ spec:
   ports:
     - port: 9090
       targetPort: 9090
-      nodePort: 30909
+      nodePort: 30909  # → http://localhost:30909
   type: NodePort

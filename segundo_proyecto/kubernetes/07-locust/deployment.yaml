@@ -1,3 +1,5 @@
+# Deployment de Locust — la herramienta de load testing que usamos para generar tráfico
+# hacia la API y ver cómo se comporta bajo carga en los dashboards de Grafana.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,16 +18,18 @@ spec:
       containers:
         - name: locust
           image: thomasriverafonseca/diabetes-locust:latest
+          # Arrancamos Locust en modo web (sin --headless) para poder controlar el test desde la UI.
+          # --web-port 8089 es el puerto de la interfaz web de Locust.
           command:
             - locust
             - -f
             - locustfile.py
             - --host
-            - http://api-service:8000
+            - http://api-service:8000  # la API que va a recibir el tráfico generado
             - --web-port
             - "8089"
           ports:
-            - containerPort: 8089
+            - containerPort: 8089  # puerto de la UI de Locust
           resources:
             requests:
               cpu: 100m

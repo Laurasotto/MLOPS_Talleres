@@ -1,3 +1,5 @@
+# Volumen persistente para MinIO — sin esto los modelos y artefactos se pierden al reiniciar el pod.
+# 5Gi es suficiente para los modelos Random Forest y sus artefactos de evaluación.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -5,7 +7,7 @@ metadata:
   namespace: mlops-p2
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteOnce  # un solo pod monta el volumen — suficiente para una instancia de MinIO
   resources:
     requests:
       storage: 5Gi

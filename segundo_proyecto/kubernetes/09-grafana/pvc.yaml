@@ -1,3 +1,6 @@
+# Volumen persistente para Grafana — sin esto los dashboards que creemos
+# y la configuración se pierden al reiniciar el pod.
+# 1Gi es más que suficiente para los dashboards del proyecto.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

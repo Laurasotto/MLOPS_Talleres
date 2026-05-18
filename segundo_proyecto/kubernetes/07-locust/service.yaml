@@ -1,3 +1,9 @@
+# Dos Services para Locust:
+# - ClusterIP: comunicación interna
+# - NodePort 30889: acceso a la UI de Locust → http://localhost:30889
+#   Desde ahí configuramos cuántos usuarios simular y arrancamos el test.
+
+# Service interno
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,6 +17,7 @@ spec:
       targetPort: 8089
   type: ClusterIP
 ---
+# Service externo — UI de Locust accesible desde el navegador
 apiVersion: v1
 kind: Service
 metadata:
@@ -22,5 +29,5 @@ spec:
   ports:
     - port: 8089
       targetPort: 8089
-      nodePort: 30889
+      nodePort: 30889  # → http://localhost:30889
   type: NodePort

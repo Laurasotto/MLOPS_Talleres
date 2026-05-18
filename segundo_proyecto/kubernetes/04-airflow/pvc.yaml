@@ -1,3 +1,9 @@
+# Airflow necesita tres volúmenes persistentes separados:
+# - dags:  donde subimos los archivos .py de nuestros DAGs
+# - logs:  donde Airflow guarda los logs de cada tarea ejecutada
+# - data:  donde montamos el CSV del dataset de diabetes
+
+# Volumen para los DAGs — 1Gi es suficiente para archivos Python
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -10,6 +16,7 @@ spec:
     requests:
       storage: 1Gi
 ---
+# Volumen para logs — 2Gi porque Airflow genera bastantes logs con cada ejecución del pipeline
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -22,6 +29,7 @@ spec:
     requests:
       storage: 2Gi
 ---
+# Volumen para el dataset — 2Gi es suficiente para el CSV de diabetes (~100MB)
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

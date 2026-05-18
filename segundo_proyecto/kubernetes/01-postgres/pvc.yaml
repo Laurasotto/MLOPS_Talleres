@@ -1,3 +1,7 @@
+# Un PersistentVolumeClaim (PVC) es una solicitud de disco persistente.
+# Sin esto, si el pod de postgres se reinicia pierde todos los datos.
+# Con el PVC, los datos sobreviven reinicios del pod porque están en un volumen separado.
+# ReadWriteOnce significa que solo un pod puede montar este volumen a la vez — suficiente para postgres.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -5,7 +9,7 @@ metadata:
   namespace: mlops-p2
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteOnce  # un solo pod puede leer y escribir — apropiado para bases de datos
   resources:
     requests:
-      storage: 5Gi
+      storage: 5Gi   # le pedimos 5 GB al cluster para guardar los datos del pipeline

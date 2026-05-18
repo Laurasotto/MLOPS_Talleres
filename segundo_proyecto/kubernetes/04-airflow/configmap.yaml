@@ -1,16 +1,32 @@
+# Configuración de Airflow — aquí definimos cómo se conecta a postgres,
+# qué executor usa y qué variables necesitan los DAGs para funcionar.
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: airflow-config
   namespace: mlops-p2
 data:
+  # LocalExecutor ejecuta las tareas en el mismo proceso del scheduler.
+  # Es más simple que CeleryExecutor y suficiente para este proyecto.
   AIRFLOW__CORE__EXECUTOR: LocalExecutor
+
+  # No cargamos los DAGs de ejemplo que trae Airflow por defecto — solo los nuestros
   AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+
+  # Conexión a la base de datos de metadatos de Airflow (airflow_db, no mlops_db)
   AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres123@postgres-service:5432/airflow_db
+
+  # Permite ver la configuración de Airflow desde la UI — útil para debugging
   AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+
+  # URL de la base de datos de datos del pipeline (donde van raw_data, clean_data, etc.)
   AIRFLOW_DB_URI: postgresql://postgres:postgres123@postgres-service:5432/mlops_db
+
+  # Variables que necesitan los DAGs para conectarse a MLflow y MinIO
   MLFLOW_TRACKING_URI: http://mlflow-service:5000
   MLFLOW_S3_ENDPOINT_URL: http://minio-service:9000
   AWS_ACCESS_KEY_ID: minioadmin
   AWS_SECRET_ACCESS_KEY: minioadmin123
+
+  # Ruta dentro del contenedor donde está montado el CSV del dataset de diabetes
   DATA_PATH: /opt/airflow/data/Diabetes.csv

@@ -1,3 +1,5 @@
+# Volumen persistente para Prometheus — sin esto pierde todas las métricas históricas al reiniciarse.
+# 2Gi es suficiente para el historial de métricas del proyecto con la retención por defecto (15 días).
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

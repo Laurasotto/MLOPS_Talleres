@@ -1,3 +1,8 @@
+# Dos Services para la API:
+# - ClusterIP: para que Streamlit y Locust se comuniquen con la API dentro del cluster
+# - NodePort 30800: para probar la API directamente desde el navegador → http://localhost:30800/docs
+
+# Service interno — Streamlit usa "http://api-service:8000" para hacer predicciones
 apiVersion: v1
 kind: Service
 metadata:
@@ -5,12 +10,13 @@ metadata:
   namespace: mlops-p2
 spec:
   selector:
-    app: api
+    app: api  # balancea carga entre los 2 pods de la API automáticamente
   ports:
     - port: 8000
       targetPort: 8000
   type: ClusterIP
 ---
+# Service externo — accesible en http://localhost:30800 desde fuera del cluster
 apiVersion: v1
 kind: Service
 metadata:
@@ -22,5 +28,5 @@ spec:
   ports:
     - port: 8000
       targetPort: 8000
-      nodePort: 30800
+      nodePort: 30800  # → http://localhost:30800/docs para ver la documentación de la API
   type: NodePort

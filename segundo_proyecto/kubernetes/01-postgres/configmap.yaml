@@ -1,9 +1,13 @@
+# Un ConfigMap guarda configuración no sensible como variables de entorno.
+# Aquí le decimos a PostgreSQL dónde está su host, en qué puerto escucha
+# y dónde guardar los datos dentro del contenedor.
+# La diferencia con Secret es que ConfigMap no es para contraseñas — eso va en secret.yaml.
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: postgres-config
   namespace: mlops-p2
 data:
-  POSTGRES_HOST: postgres-service
-  POSTGRES_PORT: "5432"
-  PGDATA: /var/lib/postgresql/data/pgdata
+  POSTGRES_HOST: postgres-service        # nombre del Service que expone postgres dentro del cluster
+  POSTGRES_PORT: "5432"                  # puerto estándar de PostgreSQL
+  PGDATA: /var/lib/postgresql/data/pgdata  # subdirectorio dentro del volumen donde postgres guarda sus archivos

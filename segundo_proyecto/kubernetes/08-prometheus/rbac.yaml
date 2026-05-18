@@ -1,25 +1,39 @@
+# RBAC (Role-Based Access Control) define qué permisos tiene Prometheus dentro del cluster.
+# Sin estos permisos, Prometheus no puede descubrir pods ni acceder a las métricas de cAdvisor.
+#
+# Aquí creamos tres recursos:
+# 1) ServiceAccount: la identidad del pod de Prometheus
+# 2) ClusterRole: los permisos que necesita (qué puede leer del API de Kubernetes)
+# 3) ClusterRoleBinding: conecta la identidad con los permisos
+
+# ServiceAccount — la identidad que usa el pod de Prometheus para autenticarse con el API server
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: prometheus
   namespace: mlops-p2
 ---
+# ClusterRole — define qué recursos puede leer Prometheus en TODO el cluster.
+# Usamos ClusterRole (no Role) porque Prometheus necesita descubrir nodos y pods
+# en todo el cluster, no solo en un namespace específico.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: prometheus-mlops-p2
 rules:
   - apiGroups: [""]
-    # nodes/proxy es necesario para que Prometheus pueda acceder a cadvisor via la API de Kubernetes
-    # sin este permiso el scrape de kubernetes-cadvisor devuelve 403 Forbidden
+    # nodes/proxy es necesario para que Prometheus pueda acceder a cAdvisor via la API de Kubernetes.
+    # Sin este permiso el scrape de kubernetes-cadvisor devuelve 403 Forbidden.
+    # pods, services y endpoints son necesarios para el descubrimiento automático de targets.
     resources: ["nodes", "nodes/metrics", "nodes/proxy", "pods", "services", "endpoints"]
-    verbs: ["get", "list", "watch"]
+    verbs: ["get", "list", "watch"]  # solo lectura — Prometheus nunca necesita escribir nada
   - nonResourceURLs: ["/metrics", "/metrics/cadvisor"]
     verbs: ["get"]
   - apiGroups: ["extensions", "networking.k8s.io"]
     resources: ["ingresses"]
     verbs: ["get", "list", "watch"]
 ---
+# ClusterRoleBinding — asocia los permisos del ClusterRole con la ServiceAccount del pod de Prometheus
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -27,8 +41,8 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: prometheus-mlops-p2
+  name: prometheus-mlops-p2  # los permisos que definimos arriba
 subjects:
   - kind: ServiceAccount
-    name: prometheus
+    name: prometheus           # la identidad del pod de Prometheus
     namespace: mlops-p2

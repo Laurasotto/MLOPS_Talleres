@@ -1,3 +1,7 @@
+# Un Service expone los pods internamente dentro del cluster.
+# ClusterIP significa que postgres solo es accesible desde dentro del cluster — no desde internet.
+# Los demás servicios (Airflow, MLflow, API) se conectan a postgres usando el nombre
+# "postgres-service" como si fuera un hostname, y Kubernetes resuelve a qué pod apunta.
 apiVersion: v1
 kind: Service
 metadata:
@@ -5,8 +9,8 @@ metadata:
   namespace: mlops-p2
 spec:
   selector:
-    app: postgres
+    app: postgres      # apunta a los pods que tengan esta etiqueta
   ports:
-    - port: 5432
-      targetPort: 5432
-  type: ClusterIP
+    - port: 5432       # puerto que expone el Service dentro del cluster
+      targetPort: 5432 # puerto en el que escucha el contenedor de postgres
+  type: ClusterIP      # solo accesible dentro del cluster — no necesita ser público

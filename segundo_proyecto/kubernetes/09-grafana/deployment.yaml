@@ -1,3 +1,5 @@
+# Deployment de Grafana — la herramienta de visualización de métricas.
+# Grafana se conecta a Prometheus para mostrar los dashboards del proyecto.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,20 +17,22 @@ spec:
     spec:
       containers:
         - name: grafana
-          image: grafana/grafana:10.4.0
+          image: grafana/grafana:10.4.0  # versión fija para reproducibilidad
           ports:
             - containerPort: 3000
           envFrom:
             - secretRef:
-                name: grafana-secret
+                name: grafana-secret  # usuario y contraseña de administrador
           env:
+            # Le decimos a Grafana dónde buscar los archivos de provisioning
+            # (datasources, dashboards precargados, etc.)
             - name: GF_PATHS_PROVISIONING
               value: /etc/grafana/provisioning
           volumeMounts:
             - name: grafana-data
-              mountPath: /var/lib/grafana
+              mountPath: /var/lib/grafana          # aquí Grafana guarda dashboards, usuarios y configuración
             - name: grafana-datasources
-              mountPath: /etc/grafana/provisioning/datasources
+              mountPath: /etc/grafana/provisioning/datasources  # aquí lee el datasource.yaml del ConfigMap
           resources:
             requests:
               cpu: 100m
@@ -38,7 +42,7 @@ spec:
               memory: 512Mi
           readinessProbe:
             httpGet:
-              path: /api/health
+              path: /api/health  # endpoint de salud de Grafana
               port: 3000
             initialDelaySeconds: 10
             periodSeconds: 5
@@ -51,7 +55,7 @@ spec:
       volumes:
         - name: grafana-data
           persistentVolumeClaim:
-            claimName: grafana-pvc
+            claimName: grafana-pvc       # el volumen donde se guardan los dashboards y configuración
         - name: grafana-datasources
           configMap:
-            name: grafana-datasources
+            name: grafana-datasources    # el datasource.yaml que configuramos en configmap.yaml

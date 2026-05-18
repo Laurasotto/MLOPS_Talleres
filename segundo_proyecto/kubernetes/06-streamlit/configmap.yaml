@@ -1,7 +1,9 @@
+# Streamlit solo necesita saber la URL de la API para hacer predicciones.
+# Usamos el nombre del Service interno (api-service) porque Streamlit corre dentro del cluster.
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: streamlit-config
   namespace: mlops-p2
 data:
-  API_URL: http://api-service:8000
+  API_URL: http://api-service:8000  # URL interna de la API — Streamlit hace POST /predict aquí

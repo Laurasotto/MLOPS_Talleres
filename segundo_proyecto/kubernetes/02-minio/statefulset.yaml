@@ -1,3 +1,5 @@
+# Usamos StatefulSet para MinIO por la misma razón que para postgres:
+# necesita una identidad estable y el mismo volumen persistente al reiniciarse.
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -16,7 +18,9 @@ spec:
     spec:
       containers:
         - name: minio
-          image: minio/minio:RELEASE.2024-06-13T22-53-53Z
+          image: minio/minio:RELEASE.2024-06-13T22-53-53Z  # versión fija para reproducibilidad
+          # Arrancamos MinIO en modo servidor apuntando a /data (el volumen montado)
+          # y definimos en qué puerto expone la consola web
           command:
             - minio
             - server
@@ -25,15 +29,15 @@ spec:
             - ":9001"
           ports:
             - containerPort: 9000
-              name: api
+              name: api      # API compatible con S3
             - containerPort: 9001
-              name: console
+              name: console  # consola web de administración
           envFrom:
             - secretRef:
-                name: minio-secret
+                name: minio-secret  # usuario y contraseña de root
           volumeMounts:
             - name: minio-data
-              mountPath: /data
+              mountPath: /data  # aquí MinIO guarda todos los buckets y objetos
           resources:
             requests:
               cpu: 250m
@@ -41,6 +45,7 @@ spec:
             limits:
               cpu: "1"
               memory: 1Gi
+          # MinIO expone un endpoint de salud en /minio/health/live que usamos para ambas probes
           readinessProbe:
             httpGet:
               path: /minio/health/live
@@ -58,4 +63,4 @@ spec:
       volumes:
         - name: minio-data
           persistentVolumeClaim:
-            claimName: minio-pvc
+            claimName: minio-pvc  # el volumen de 5Gi definido en pvc.yaml

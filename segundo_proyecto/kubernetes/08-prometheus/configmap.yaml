@@ -1,3 +1,5 @@
+# Configuración de Prometheus — aquí definimos qué servicios monitorear y con qué frecuencia.
+# Prometheus funciona con "scraping": va a buscar las métricas a cada target periódicamente.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,45 +8,59 @@ metadata:
 data:
   prometheus.yml: |
     global:
-      scrape_interval: 15s
-      evaluation_interval: 15s
+      scrape_interval: 15s      # cada cuánto va a buscar métricas a los targets
+      evaluation_interval: 15s  # cada cuánto evalúa las reglas de alertas (si las hubiera)
 
     scrape_configs:
+      # Job 1: scrapea directamente la API de inferencia usando su nombre de Service.
+      # Este job recoge las métricas que definimos en main.py (predict_requests_total, predict_latency_seconds).
       - job_name: 'diabetes-api'
         static_configs:
-          - targets: ['api-service:8000']
-        metrics_path: '/metrics'
+          - targets: ['api-service:8000']  # nombre del Service interno de la API
+        metrics_path: '/metrics'           # endpoint donde la API expone sus métricas de Prometheus
 
+      # Job 2: scrapea cAdvisor para obtener métricas de CPU y RAM por pod/nodo.
+      # cAdvisor está integrado en el kubelet de cada nodo y expone métricas de contenedores.
+      # Usamos HTTPS con el token de la ServiceAccount de Prometheus para autenticarnos.
       - job_name: 'kubernetes-cadvisor'
         scheme: https
         tls_config:
-          insecure_skip_verify: true
-        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          insecure_skip_verify: true  # el certificado del API server es autofirmado en clusters locales
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token  # token de autenticación del pod
         kubernetes_sd_configs:
-          - role: node
+          - role: node  # descubre automáticamente todos los nodos del cluster
         relabel_configs:
+          # Copiamos las etiquetas del nodo como etiquetas de Prometheus
           - action: labelmap
             regex: __meta_kubernetes_node_label_(.+)
+          # Redirigimos todas las peticiones al API server de Kubernetes (que actúa como proxy a cAdvisor)
           - target_label: __address__
             replacement: kubernetes.default.svc:443
+          # Construimos la ruta hacia las métricas de cAdvisor para cada nodo
           - source_labels: [__meta_kubernetes_node_name]
             regex: (.+)
             target_label: __metrics_path__
             replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
 
+      # Job 3: descubre automáticamente pods del namespace mlops-p2 que tengan
+      # la anotación prometheus.io/scrape: "true" — como nuestra API de inferencia.
+      # Esto es el descubrimiento dinámico de servicios — no hay que hardcodear IPs.
       - job_name: 'kubernetes-pods'
         kubernetes_sd_configs:
           - role: pod
             namespaces:
-              names: ['mlops-p2']
+              names: ['mlops-p2']  # solo buscamos pods en nuestro namespace
         relabel_configs:
+          # Solo incluimos pods que tengan scrape=true en sus anotaciones
           - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
             action: keep
             regex: "true"
+          # Usamos el path que el pod especifica en su anotación prometheus.io/path
           - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
             action: replace
             target_label: __metrics_path__
             regex: (.+)
+          # Construimos la dirección ip:puerto usando el puerto especificado en la anotación
           - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
             action: replace
             regex: ([^:]+)(?::\d+)?;(\d+)

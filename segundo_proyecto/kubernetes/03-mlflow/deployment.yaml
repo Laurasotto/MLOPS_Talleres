@@ -1,3 +1,5 @@
+# Deployment de MLflow — usamos Deployment (no StatefulSet) porque MLflow
+# guarda su estado en postgres y MinIO, no en el pod mismo. Es stateless.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,19 +15,28 @@ spec:
       labels:
         app: mlflow
     spec:
+      # Los initContainers se ejecutan en orden y deben completarse antes de que
+      # arranque el contenedor principal de MLflow. Los usamos para garantizar
+      # que las dependencias están listas antes de intentar conectarse a ellas.
       initContainers:
+        # 1) Esperamos a que postgres esté aceptando conexiones TCP
         - name: wait-for-postgres
           image: busybox:1.36
           command:
             - sh
             - -c
             - until nc -z postgres-service 5432; do echo waiting for postgres; sleep 3; done
+
+        # 2) Esperamos a que MinIO esté listo para recibir peticiones
         - name: wait-for-minio
           image: busybox:1.36
           command:
             - sh
             - -c
             - until nc -z minio-service 9000; do echo waiting for minio; sleep 3; done
+
+        # 3) Creamos el bucket "mlflows3" en MinIO donde MLflow guardará los artefactos.
+        #    --ignore-existing evita error si el bucket ya existe (reinicios del pod).
         - name: create-minio-bucket
           image: minio/mc:latest
           command:
@@ -34,9 +45,13 @@ spec:
             - |
               mc alias set myminio http://minio-service:9000 minioadmin minioadmin123 &&
               mc mb --ignore-existing myminio/mlflows3
+
       containers:
         - name: mlflow
           image: ghcr.io/mlflow/mlflow:v2.14.1
+          # Instalamos psycopg2-binary (para conectar con postgres) y boto3 (para S3/MinIO)
+          # en tiempo de arranque porque la imagen base de MLflow no los trae.
+          # --serve-artifacts hace que MLflow sirva los artefactos directamente (necesario para cargar modelos)
           command:
             - sh
             - -c
@@ -60,11 +75,13 @@ spec:
             limits:
               cpu: "1"
               memory: 1Gi
+          # MLflow tarda más en arrancar porque instala dependencias primero,
+          # por eso los delays son mayores que en otros servicios.
           readinessProbe:
             httpGet:
               path: /
               port: 5000
-            initialDelaySeconds: 30
+            initialDelaySeconds: 30   # tiempo estimado para que pip install termine
             periodSeconds: 10
             failureThreshold: 6
           livenessProbe:

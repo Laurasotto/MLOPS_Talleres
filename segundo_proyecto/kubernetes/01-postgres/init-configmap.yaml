@@ -1,3 +1,7 @@
+# Este ConfigMap contiene el script SQL que PostgreSQL ejecuta automáticamente
+# la primera vez que arranca (porque lo montamos en /docker-entrypoint-initdb.d/).
+# Aquí creamos todos los schemas y tablas que necesita el pipeline antes de que
+# Airflow o la API intenten escribir en ellos.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -5,15 +9,17 @@ metadata:
   namespace: mlops-p2
 data:
   init.sql: |
-    -- Create Airflow metadata database (Airflow connects here; main data goes to mlops_db)
+    -- Airflow necesita su propia base de datos para guardar metadatos de DAGs, runs y tareas.
+    -- La creamos solo si no existe para que el script sea seguro de ejecutar varias veces.
     SELECT 'CREATE DATABASE airflow_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'airflow_db')\gexec
 
-    -- Create schemas
-    CREATE SCHEMA IF NOT EXISTS raw_data;
-    CREATE SCHEMA IF NOT EXISTS clean_data;
-    CREATE SCHEMA IF NOT EXISTS inference_logs;
+    -- Creamos los schemas que separan los datos por etapa del pipeline
+    CREATE SCHEMA IF NOT EXISTS raw_data;       -- datos crudos tal como vienen del CSV
+    CREATE SCHEMA IF NOT EXISTS clean_data;     -- datos procesados listos para entrenar
+    CREATE SCHEMA IF NOT EXISTS inference_logs; -- registro de cada predicción que hace la API
 
-    -- Batch state tracking
+    -- Tabla que lleva el control de qué batches ya se cargaron y hasta qué fila llegamos.
+    -- Esto permite que el pipeline pause y continúe sin volver a cargar datos desde el inicio.
     CREATE TABLE IF NOT EXISTS raw_data.batch_state (
         id            SERIAL PRIMARY KEY,
         batch_id      INT UNIQUE NOT NULL,
@@ -24,7 +30,8 @@ data:
         updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
-    -- Raw data table
+    -- Tabla de datos crudos — guardamos todo tal como viene del CSV sin modificar nada.
+    -- row_hash es un MD5 de cada fila que usamos para evitar duplicados en recargas.
     CREATE TABLE IF NOT EXISTS raw_data.diabetes_raw (
         id                          SERIAL PRIMARY KEY,
         batch_id                    INT NOT NULL,
@@ -83,9 +90,11 @@ data:
         created_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
+    -- Índice sobre batch_id para que las consultas por batch sean rápidas
     CREATE INDEX IF NOT EXISTS idx_raw_batch_id ON raw_data.diabetes_raw(batch_id);
 
-    -- Clean data table
+    -- Tabla de datos limpios — aquí guardamos los datos ya codificados como FLOAT,
+    -- listos para entrenar el modelo. Cada columna corresponde a una feature del modelo.
     CREATE TABLE IF NOT EXISTS clean_data.diabetes_clean (
         id                               SERIAL PRIMARY KEY,
         batch_id                         INT NOT NULL,
@@ -140,17 +149,19 @@ data:
 
     CREATE INDEX IF NOT EXISTS idx_clean_batch_id ON clean_data.diabetes_clean(batch_id);
 
-    -- Inference logs
+    -- pgcrypto nos da la función gen_random_uuid() que usamos en inference_logs
     CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+    -- Tabla donde la API guarda cada predicción que realiza.
+    -- Esto nos permite auditar qué predijo el modelo y cuándo.
     CREATE TABLE IF NOT EXISTS inference_logs.predictions (
         id                  SERIAL PRIMARY KEY,
         request_id          UUID DEFAULT gen_random_uuid(),
         inference_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        input_data          JSONB,
-        prediction          INT,
-        prediction_label    VARCHAR(50),
-        probability         FLOAT,
+        input_data          JSONB,           -- los datos del paciente que se enviaron
+        prediction          INT,             -- 0 o 1
+        prediction_label    VARCHAR(50),     -- etiqueta legible del resultado
+        probability         FLOAT,           -- confianza del modelo en la predicción
         model_name          VARCHAR(255),
         model_version       VARCHAR(50),
         model_alias         VARCHAR(50),

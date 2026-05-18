@@ -1,3 +1,5 @@
+# Deployment de la interfaz web Streamlit — es la UI que usan los usuarios para hacer predicciones.
+# Solo necesita 1 réplica porque no es crítica para el servicio de inferencia.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,10 +19,11 @@ spec:
         - name: streamlit
           image: thomasriverafonseca/diabetes-streamlit:latest
           ports:
-            - containerPort: 8501
+            - containerPort: 8501  # puerto por defecto de Streamlit
           envFrom:
             - configMapRef:
                 name: streamlit-config
+          # Streamlit consume muy pocos recursos comparado con la API o el scheduler
           resources:
             requests:
               cpu: 100m
@@ -28,6 +31,7 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+          # Streamlit tiene su propio endpoint de salud en /_stcore/health
           readinessProbe:
             httpGet:
               path: /_stcore/health

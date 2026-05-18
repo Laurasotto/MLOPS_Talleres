@@ -1,3 +1,6 @@
+# Este ConfigMap configura el datasource de Grafana automáticamente al arrancar.
+# Grafana lo lee desde /etc/grafana/provisioning/datasources/ y lo aplica sin necesidad
+# de configurarlo manualmente desde la UI — esto se llama "provisioning".
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -9,7 +12,7 @@ data:
     datasources:
       - name: Prometheus
         type: prometheus
-        url: http://prometheus-service:9090
-        access: proxy
-        isDefault: true
-        editable: true
+        url: http://prometheus-service:9090  # nombre del Service interno de Prometheus
+        access: proxy    # Grafana hace las peticiones a Prometheus desde el servidor, no desde el navegador
+        isDefault: true  # este es el datasource por defecto para los paneles
+        editable: true   # permite modificar la configuración desde la UI de Grafana si es necesario

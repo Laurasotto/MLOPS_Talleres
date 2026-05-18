@@ -1,12 +1,16 @@
+# Configuración de MLflow: le decimos dónde está su backend (postgres) y
+# dónde guardar los artefactos (MinIO, que simula S3 con las variables AWS_*).
+# MLflow usa el protocolo S3 para hablar con MinIO, por eso le pasamos las
+# credenciales como si fueran credenciales de AWS.
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: mlflow-config
   namespace: mlops-p2
 data:
-  MLFLOW_S3_ENDPOINT_URL: http://minio-service:9000
-  MLFLOW_BACKEND_STORE_URI: postgresql://postgres:postgres123@postgres-service:5432/mlops_db
-  MLFLOW_ARTIFACT_ROOT: s3://mlflows3/mlflow-artifacts
-  AWS_ACCESS_KEY_ID: minioadmin
-  AWS_SECRET_ACCESS_KEY: minioadmin123
-  MLFLOW_TRACKING_URI: http://mlflow-service:5000
+  MLFLOW_S3_ENDPOINT_URL: http://minio-service:9000              # apuntamos a MinIO en lugar de AWS S3 real
+  MLFLOW_BACKEND_STORE_URI: postgresql://postgres:postgres123@postgres-service:5432/mlops_db  # donde MLflow guarda sus metadatos (runs, métricas, parámetros)
+  MLFLOW_ARTIFACT_ROOT: s3://mlflows3/mlflow-artifacts           # ruta en MinIO donde se guardan los modelos y artefactos
+  AWS_ACCESS_KEY_ID: minioadmin                                  # usuario de MinIO (MLflow lo usa como si fuera AWS)
+  AWS_SECRET_ACCESS_KEY: minioadmin123                           # contraseña de MinIO
+  MLFLOW_TRACKING_URI: http://mlflow-service:5000               # URL que usan Airflow y la API para conectarse al servidor de MLflow

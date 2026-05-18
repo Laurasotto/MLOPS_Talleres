@@ -1,13 +1,15 @@
+# Variables de entorno que necesita la API de inferencia para funcionar.
+# La API carga el modelo champion desde MLflow y guarda los logs en postgres.
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: api-config
   namespace: mlops-p2
 data:
-  MLFLOW_TRACKING_URI: http://mlflow-service:5000
-  MLFLOW_S3_ENDPOINT_URL: http://minio-service:9000
-  AWS_ACCESS_KEY_ID: minioadmin
+  MLFLOW_TRACKING_URI: http://mlflow-service:5000           # dónde está el servidor de MLflow
+  MLFLOW_S3_ENDPOINT_URL: http://minio-service:9000         # dónde está MinIO para descargar el modelo
+  AWS_ACCESS_KEY_ID: minioadmin                             # credenciales de MinIO (necesarias para descargar artefactos)
   AWS_SECRET_ACCESS_KEY: minioadmin123
-  MODEL_NAME: diabetes_readmission_model
-  MODEL_ALIAS: champion
-  DATABASE_URL: postgresql://postgres:postgres123@postgres-service:5432/mlops_db
+  MODEL_NAME: diabetes_readmission_model                    # nombre del modelo en el registry de MLflow
+  MODEL_ALIAS: champion                                     # siempre cargamos la versión marcada como champion
+  DATABASE_URL: postgresql://postgres:postgres123@postgres-service:5432/mlops_db  # donde guardar los logs de inferencia

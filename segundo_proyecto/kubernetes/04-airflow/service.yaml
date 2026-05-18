@@ -1,3 +1,8 @@
+# Dos Services para Airflow:
+# - ClusterIP: comunicación interna dentro del cluster
+# - NodePort 30808: acceso a la UI desde el navegador → http://localhost:30808
+
+# Service interno — usado por otros servicios que quieran comunicarse con Airflow
 apiVersion: v1
 kind: Service
 metadata:
@@ -5,12 +10,13 @@ metadata:
   namespace: mlops-p2
 spec:
   selector:
-    app: airflow-webserver
+    app: airflow-webserver  # apunta al webserver, no al scheduler
   ports:
     - port: 8080
       targetPort: 8080
   type: ClusterIP
 ---
+# Service externo — para abrir la UI de Airflow en el navegador desde fuera del cluster
 apiVersion: v1
 kind: Service
 metadata:
@@ -22,5 +28,5 @@ spec:
   ports:
     - port: 8080
       targetPort: 8080
-      nodePort: 30808
+      nodePort: 30808  # → http://localhost:30808 (credenciales: airflow / airflow)
   type: NodePort

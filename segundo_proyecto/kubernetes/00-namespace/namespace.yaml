@@ -1,3 +1,6 @@
+# Un Namespace en Kubernetes es como una carpeta lógica que agrupa todos los recursos del proyecto.
+# Lo usamos para separar nuestros servicios de otros proyectos que puedan correr en el mismo cluster.
+# Todos los demás archivos de esta carpeta referencian este namespace con: namespace: mlops-p2
 apiVersion: v1
 kind: Namespace
 metadata:
