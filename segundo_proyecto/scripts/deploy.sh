@@ -1,22 +1,31 @@
 #!/usr/bin/env bash
-# Deploy all Kubernetes resources for MLOps Proyecto 2
-# Usage: ./scripts/deploy.sh [DOCKERHUB_USER]
+# Script de despliegue completo del proyecto en Kubernetes.
+# Hace tres cosas en orden:
+# 1) Construye y sube las imágenes Docker a DockerHub
+# 2) Aplica los manifiestos de Kubernetes en el orden correcto (dependencias primero)
+# 3) Espera a que los servicios críticos estén listos antes de continuar
+#
+# Uso: ./scripts/deploy.sh [DOCKERHUB_USER]
+# Ejemplo: ./scripts/deploy.sh thomasriverafonseca
 
 set -euo pipefail
 
-DOCKER_USER="${1:-thomasriverafonseca}"
-K8S_DIR="$(cd "$(dirname "$0")/.." && pwd)/kubernetes"
+DOCKER_USER="${1:-thomasriverafonseca}"  # usuario de DockerHub, con valor por defecto
+K8S_DIR="$(cd "$(dirname "$0")/.." && pwd)/kubernetes"  # ruta absoluta a la carpeta kubernetes
 
 echo "═══════════════════════════════════════════════"
 echo "  MLOps Proyecto 2 — Kubernetes Deployment"
 echo "  DockerHub user: $DOCKER_USER"
 echo "═══════════════════════════════════════════════"
 
-# ── Build and push Docker images ─────────────────
+# ── Paso 1: Construir y subir imágenes Docker ─────────────────────────────
+# Construimos una imagen por cada servicio que tiene su propio Dockerfile.
+# La imagen se sube a DockerHub para que Kubernetes la pueda descargar desde los nodos.
 echo ""
 echo "▶ Building and pushing Docker images..."
 
 for svc in api streamlit_app airflow locust; do
+  # Mapeamos el nombre del directorio al nombre del tag de la imagen
   if [ "$svc" = "streamlit_app" ]; then
     tag="${DOCKER_USER}/diabetes-streamlit:latest"
   elif [ "$svc" = "airflow" ]; then
@@ -29,7 +38,10 @@ for svc in api streamlit_app airflow locust; do
   docker push "$tag"
 done
 
-# ── Apply Kubernetes manifests in order ──────────
+# ── Paso 2: Aplicar manifiestos de Kubernetes en orden ────────────────────
+# El orden importa porque hay dependencias entre servicios:
+# postgres y minio deben estar listos antes de mlflow,
+# y mlflow debe estar listo antes de airflow y la api.
 echo ""
 echo "▶ Applying Kubernetes manifests..."
 
@@ -39,6 +51,7 @@ apply_dir() {
   kubectl apply -f "$dir/"
 }
 
+# Primero creamos el namespace, las bases de datos y el monitoreo
 apply_dir "$K8S_DIR/00-namespace"
 apply_dir "$K8S_DIR/01-postgres"
 apply_dir "$K8S_DIR/02-minio"
@@ -46,6 +59,9 @@ apply_dir "$K8S_DIR/03-mlflow"
 apply_dir "$K8S_DIR/08-prometheus"
 apply_dir "$K8S_DIR/09-grafana"
 
+# ── Paso 3: Esperar a que los servicios críticos estén listos ─────────────
+# kubectl rollout status bloquea hasta que el deployment/statefulset está completamente listo.
+# Esto garantiza que mlflow puede conectarse a postgres y minio antes de arrancar.
 echo ""
 echo "▶ Waiting for PostgreSQL to be ready..."
 kubectl rollout status statefulset/postgres -n mlops-p2 --timeout=120s
@@ -56,6 +72,7 @@ kubectl rollout status statefulset/minio -n mlops-p2 --timeout=120s
 echo "▶ Waiting for MLflow to be ready..."
 kubectl rollout status deployment/mlflow -n mlops-p2 --timeout=180s
 
+# Una vez que los servicios base están listos, desplegamos el resto
 apply_dir "$K8S_DIR/04-airflow"
 apply_dir "$K8S_DIR/05-api"
 apply_dir "$K8S_DIR/06-streamlit"
@@ -65,6 +82,7 @@ echo ""
 echo "▶ Deployment complete. Checking pod status..."
 kubectl get pods -n mlops-p2
 
+# Imprimimos las URLs de acceso para facilitar el trabajo
 echo ""
 echo "═══════════════════════════════════════════════"
 echo "  Access URLs (Docker Desktop Kubernetes):"

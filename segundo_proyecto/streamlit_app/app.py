@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import os
 
+# URL de la API — si no hay variable de entorno, apuntamos al NodePort para uso local
 API_URL = os.getenv("API_URL", "http://localhost:30800")
 
 st.set_page_config(
@@ -13,9 +14,10 @@ st.set_page_config(
 st.title("Predecir Reingreso por Diabetes")
 st.markdown("MLOps Proyecto 2 — Pontificia Universidad Javeriana · Grupo 4")
 
-# ── Sidebar ──────────────────────────────────
+# ── Barra lateral con estado del modelo y la API ──────────────────────────
 with st.sidebar:
     st.header("Estado del Modelo")
+    # Consultamos /model-info para ver qué versión del modelo está cargada
     if st.button("Actualizar info del modelo"):
         try:
             r = requests.get(f"{API_URL}/model-info", timeout=5)
@@ -34,6 +36,7 @@ with st.sidebar:
     st.divider()
     st.header("API")
     st.write(f"`{API_URL}`")
+    # Chequeamos /health para saber si la API está disponible
     try:
         h = requests.get(f"{API_URL}/health", timeout=3)
         if h.status_code == 200:
@@ -43,7 +46,9 @@ with st.sidebar:
     except Exception:
         st.error("API no disponible")
 
-# ── Ejemplo ───────────────────────────────────
+# ── Valores de ejemplo para pre-rellenar el formulario ────────────────────
+# Este paciente de ejemplo representa un caso típico del dataset de diabetes.
+# El botón "Cargar datos de ejemplo" llena todos los campos con estos valores.
 EXAMPLE = {
     "time_in_hospital": 3,
     "num_lab_procedures": 41,
@@ -74,7 +79,8 @@ EXAMPLE = {
     "diag_3_code": 276.0,
 }
 
-# Inicializar session state con claves por widget
+# Inicializamos el session_state de Streamlit con los valores del ejemplo.
+# session_state persiste los valores entre reruns de la app (cuando el usuario interactúa).
 def init_state():
     for k, v in EXAMPLE.items():
         key = f"w_{k}"
@@ -93,7 +99,8 @@ with col_load:
             st.session_state[f"w_{k}"] = v
         st.rerun()
 
-# ── Formulario ───────────────────────────────
+# ── Formulario de entrada del paciente ────────────────────────────────────
+# Dividimos el formulario en tres columnas para que quepa en pantalla.
 st.subheader("Datos del Paciente")
 col1, col2, col3 = st.columns(3)
 
@@ -110,6 +117,7 @@ with col1:
 
 with col2:
     st.markdown("**Demografía del paciente**")
+    # La edad se muestra como el punto medio del rango original del dataset
     AGE_OPTIONS = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
     age_encoded = st.selectbox(
         "Grupo de edad (punto medio)",
@@ -149,6 +157,8 @@ with col2:
 
 with col3:
     st.markdown("**Medicamentos** (0=No, 1=Estable, 2=Aumentó, 3=Disminuyó)")
+    # Solo mostramos los medicamentos más relevantes para no sobrecargar la UI.
+    # Los medicamentos que no aparecen en el formulario se envían como 0 (no administrado).
     med_map = lambda x: ["No", "Estable", "Aumentó", "Disminuyó"][int(x)]
     metformin_encoded    = st.selectbox("Metformina", [0, 1, 2, 3], format_func=med_map, key="w_metformin_encoded")
     insulin_encoded      = st.selectbox("Insulina", [0, 1, 2, 3], format_func=med_map, key="w_insulin_encoded")
@@ -176,9 +186,11 @@ with col3:
     diag_2_code = st.number_input("Diagnóstico 2 (numérico)", 0.0, 999.0, key="w_diag_2_code")
     diag_3_code = st.number_input("Diagnóstico 3 (numérico)", 0.0, 999.0, key="w_diag_3_code")
 
-# ── Predicción ───────────────────────────────
+# ── Botón de predicción y resultado ───────────────────────────────────────
 st.divider()
 if st.button("Predecir Reingreso", type="primary", use_container_width=True):
+    # Armamos el payload con todos los campos — los que el usuario no modificó
+    # en el formulario se envían con su valor por defecto (0 para medicamentos no mostrados)
     payload = {
         "time_in_hospital": time_in_hospital,
         "num_lab_procedures": num_lab_procedures,
@@ -197,6 +209,7 @@ if st.button("Predecir Reingreso", type="primary", use_container_width=True):
         "a1cresult_encoded": a1cresult_encoded,
         "max_glu_serum_encoded": max_glu_serum_encoded,
         "metformin_encoded": metformin_encoded,
+        # Medicamentos no mostrados en UI — enviamos 0 (no administrado)
         "repaglinide_encoded": 0,
         "nateglinide_encoded": 0,
         "chlorpropamide_encoded": 0,
@@ -233,11 +246,13 @@ if st.button("Predecir Reingreso", type="primary", use_container_width=True):
             if resp.status_code == 200:
                 result = resp.json()
                 st.divider()
+                # Mostramos el resultado con color según el riesgo
                 if result["prediction"] == 1:
                     st.error("RIESGO ALTO: El paciente probablemente será readmitido en menos de 30 días")
                 else:
                     st.success("RIESGO BAJO: El paciente probablemente NO será readmitido en los próximos 30 días")
 
+                # Mostramos las métricas principales de la predicción
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
                     st.metric("Predicción", result["prediction_label"].replace("_", " "))
@@ -246,6 +261,7 @@ if st.button("Predecir Reingreso", type="primary", use_container_width=True):
                 with col_r3:
                     st.metric("Tiempo de respuesta", f"{result['response_time_ms']:.1f} ms")
 
+                # Detalles del modelo en un expander para no saturar la pantalla
                 with st.expander("Detalles del modelo"):
                     st.write(f"**Modelo:** {result['model_name']}")
                     st.write(f"**Versión:** {result['model_version']}")
@@ -253,9 +269,11 @@ if st.button("Predecir Reingreso", type="primary", use_container_width=True):
                     st.write(f"**ID de solicitud:** `{result['request_id']}`")
 
             elif resp.status_code == 422:
+                # Error de validación — Pydantic rechazó algún campo del payload
                 st.error("Error de validación: revisa los valores ingresados.")
                 st.json(resp.json())
             elif resp.status_code == 503:
+                # La API no tiene modelo cargado — hay que correr el DAG de Airflow primero
                 st.error("Modelo no disponible. Ejecuta primero el DAG de Airflow.")
             else:
                 st.error(f"La API respondió con estado {resp.status_code}")
