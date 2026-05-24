@@ -81,6 +81,31 @@ Estas caracteristicas nos permiten anticipar el comportamiento del DAG en cada b
 
 ---
 
+## Diseno de base de datos
+
+Decidimos usar una sola instancia de PostgreSQL con tres schemas separados: `raw`, `clean` y `mlflow`. El schema de MLflow lo crea automaticamente el servidor al arrancar, no lo definimos nosotros.
+
+### Schema raw
+
+| Tabla | Descripcion |
+|---|---|
+| `raw.batches` | Metadata de cada batch ingestado desde la API |
+| `raw.properties` | Registros crudos tal como llegan, sin ninguna modificacion |
+| `raw.batch_audit` | Validaciones, decisiones y resultados por batch, es la fuente de datos de Streamlit |
+| `raw.inference_events` | Registro de cada prediccion realizada por FastAPI |
+
+### Schema clean
+
+| Tabla | Descripcion |
+|---|---|
+| `clean.properties` | Datos transformados y listos para entrenamiento |
+
+Decidimos botar `street` y `brokered_by` en el paso de limpieza porque son IDs numericos codificados sin significado semantico recuperable. Las variables categoricas restantes (`zip_code`, `city`, `state`, `status`) se guardan como texto. Estamos pensando en aplicar el encoding como parte del pipeline de sklearn durante el entrenamiento y guardar ese pipeline como artefacto en MLflow junto al modelo, para garantizar consistencia entre entrenamiento e inferencia.
+
+El flujo es: el batch llega y se almacena en `raw.properties` sin tocar. Airflow aplica la limpieza basica y guarda el resultado en `clean.properties`. Cuando el DAG decide entrenar, la tarea de entrenamiento lee desde `clean.properties`, aplica el encoding y entrena el modelo.
+
+---
+
 ## Estado actual
 
 - [x] Exploracion y documentacion de la API del docente
