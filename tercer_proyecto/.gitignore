@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Claude Code settings (local only)
+.claude/
+
+# Airflow logs y datos locales
+airflow/logs/
+airflow/data/
+
+# Modelos entrenados (se guardan en MinIO)
+*.pkl
+*.joblib
+*.h5
+
+# Variables de entorno locales
+.env
+*.env
+
+# IDE
+.idea/
+.vscode/
