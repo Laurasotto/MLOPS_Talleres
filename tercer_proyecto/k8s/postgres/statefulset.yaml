@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: postgres
+spec:
+  serviceName: postgres-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          envFrom:
+            # Toma las variables POSTGRES_USER, POSTGRES_PASSWORD y POSTGRES_DB del Secret
+            - secretRef:
+                name: postgres-secret
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "grupo4", "-d", "mlops"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "grupo4", "-d", "mlops"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          volumeMounts:
+            # Datos de PostgreSQL — persiste aunque el pod se reinicie
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            # Script de inicializacion — PostgreSQL lo ejecuta la primera vez que arranca
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: init-sql
+          configMap:
+            name: postgres-init-sql
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
