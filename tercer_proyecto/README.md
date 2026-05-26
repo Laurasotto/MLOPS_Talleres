@@ -106,12 +106,30 @@ El flujo es: el batch llega y se almacena en `raw.properties` sin tocar. Airflow
 
 ---
 
+## Acceso a los servicios
+
+Todos los servicios corren en el cluster Kubernetes local (Docker Desktop). Las URLs son accesibles desde el host una vez aplicados los manifiestos.
+
+| Servicio | URL | Credenciales |
+|---|---|---|
+| Airflow UI | http://localhost:30810 | `admin` / `admin123` |
+| MLflow UI | http://localhost:30501 | sin autenticacion |
+| MinIO Console | http://localhost:30902 | `minioadmin` / `minioadmin123` |
+| FastAPI (inferencia) | http://localhost:30800 | — |
+| Streamlit | http://localhost:30851 | — |
+| Grafana | http://localhost:30300 | `admin` / `admin` |
+| Prometheus | http://localhost:30909 | sin autenticacion |
+
+> Los servicios de FastAPI, Streamlit, Grafana y Prometheus aun no estan desplegados.
+
+---
+
 ## Estado actual
 
 - [x] Exploracion y documentacion de la API del docente
-- [ ] Diseno de manifiestos de Kubernetes por namespace
-- [ ] Implementacion del DAG principal de Airflow
-- [ ] Configuracion de MLflow con PostgreSQL y MinIO
+- [x] Diseno de manifiestos de Kubernetes por namespace
+- [x] Implementacion del DAG principal de Airflow (16 tareas, bifurcaciones, audit)
+- [x] Configuracion de MLflow con PostgreSQL y MinIO
 - [ ] Implementacion de FastAPI con recarga de modelo desde MLflow
 - [ ] Implementacion de Streamlit
 - [ ] Configuracion de Prometheus y Grafana
