@@ -13,12 +13,13 @@ MLFLOW_URI      = os.environ.get("MLFLOW_TRACKING_URI", "http://mlflow-service.m
 EXPERIMENT_NAME = "precio_propiedades_grupo4"
 PROD_ALIAS      = "production"
 
-# Umbrales de decision de entrenamiento
-MIN_RECORDS_TO_TRAIN    = 500   # minimo de registros limpios acumulados para entrenar
-DRIFT_ALPHA             = 0.05  # p-value del KS test; si p < alpha hay drift
-MIN_CATEGORY_FREQ       = 10    # categoria nueva debe aparecer al menos N veces para contar
-MAE_IMPROVE_PCT         = 0.03  # candidato debe mejorar MAE del productivo en al menos 3%
-MAX_RMSE_DEGRADE_PCT    = 0.01  # candidato no puede empeorar RMSE mas del 1%
+MIN_RECORDS_TO_TRAIN    = 500
+MIN_BATCH_RECORDS       = 10_000
+MIN_DISTINCT_STATES     = 10
+DRIFT_ALPHA             = 0.05
+MIN_CATEGORY_FREQ       = 10
+MAE_IMPROVE_PCT         = 0.03
+MAX_RMSE_DEGRADE_PCT    = 0.01
 
 default_args = {
     "owner": "grupo4",
@@ -35,44 +36,35 @@ with DAG(
 ) as dag:
 
     # =========================================================================
-    # 1. OBTENER LOTE DE LA API
+    # 1. OBTENER LOTE Y GUARDAR EN POSTGRES
+    # Descarga el batch de la API y lo persiste en raw.batches + raw.properties.
+    # Retorna solo el batch_id (entero) para que el XCom sea minimo.
     # =========================================================================
 
     @task
     def obtener_lote_api():
         logging.info(f"Consultando API en {DATA_API_URL}/data para el grupo {GROUP_NUMBER}...")
         try:
+            # Timeout de 120s para soportar batches grandes (batch 2 tiene 230k registros)
             response = requests.get(
                 f"{DATA_API_URL}/data",
                 params={"group_number": GROUP_NUMBER},
-                timeout=30,
+                timeout=120,
             )
             if response.status_code == 400:
                 logging.info("La API respondio 400: no hay mas batches disponibles para este grupo.")
                 return None
             response.raise_for_status()
             data = response.json()
-            logging.info(
-                f"Batch {data['batch_number']} recibido exitosamente. "
-                f"Total de registros: {len(data['data'])}."
-            )
-            return data
         except requests.exceptions.RequestException as e:
             raise RuntimeError(f"Error de red al llamar la API: {e}")
 
-    # =========================================================================
-    # 2. GUARDAR DATOS CRUDOS EN POSTGRES
-    # =========================================================================
+        batch_number = data["batch_number"]
+        records      = data["data"]
+        logging.info(f"Batch {batch_number} recibido. Total de registros: {len(records)}.")
 
-    @task
-    def guardar_datos_postgres(data: dict):
-        if data is None:
-            logging.info("No hay datos que almacenar porque la tarea anterior no trajo ningun batch.")
-            return None
-
-        logging.info(f"Conectando a PostgreSQL para almacenar el batch {data['batch_number']}...")
-        hook = PostgresHook(postgres_conn_id="postgres_mlops")
-        conn = hook.get_conn()
+        hook   = PostgresHook(postgres_conn_id="postgres_mlops")
+        conn   = hook.get_conn()
         cursor = conn.cursor()
 
         cursor.execute(
@@ -82,25 +74,19 @@ with DAG(
             ON CONFLICT (batch_number) DO NOTHING
             RETURNING id
             """,
-            (data["batch_number"], len(data["data"]), "success"),
+            (batch_number, len(records), "success"),
         )
         row = cursor.fetchone()
 
         if row is None:
-            logging.warning(
-                f"El batch {data['batch_number']} ya existia en raw.batches. "
-                f"Se omite la insercion para evitar duplicados."
-            )
+            logging.warning(f"Batch {batch_number} ya existia en raw.batches. Se omite la insercion.")
             conn.close()
             return None
 
         batch_id = row[0]
-        logging.info(
-            f"Batch registrado con batch_id={batch_id}. "
-            f"Insertando {len(data['data'])} propiedades en raw.properties..."
-        )
+        logging.info(f"Batch registrado con batch_id={batch_id}. Insertando {len(records)} propiedades...")
 
-        records = [
+        rows = [
             (
                 batch_id,
                 r.get("brokered_by"),
@@ -116,7 +102,7 @@ with DAG(
                 r.get("house_size"),
                 r.get("prev_sold_date"),
             )
-            for r in data["data"]
+            for r in records
         ]
 
         cursor.executemany(
@@ -126,25 +112,23 @@ with DAG(
                  acre_lot, street, city, state, zip_code, house_size, prev_sold_date)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
-            records,
+            rows,
         )
-
         conn.commit()
         conn.close()
-        logging.info(
-            f"Listo. {len(records)} propiedades del batch {data['batch_number']} "
-            f"guardadas en raw.properties con batch_id={batch_id}."
-        )
+        logging.info(f"Listo. {len(rows)} propiedades del batch {batch_number} guardadas con batch_id={batch_id}.")
         return batch_id
 
     # =========================================================================
-    # 3. VALIDAR COLUMNAS (esquema)
+    # 2. VALIDAR COLUMNAS (esquema)
+    # Lee una muestra de raw.properties para verificar que el batch
+    # trajo todas las columnas obligatorias.
     # =========================================================================
 
     @task
-    def validar_columnas(data: dict):
-        if data is None:
-            logging.info("No hay datos que validar porque el batch vino vacio.")
+    def validar_columnas(batch_id: int):
+        if batch_id is None:
+            logging.info("Sin batch_id. No hay esquema que validar.")
             return {"valid": False, "reason": "sin datos"}
 
         expected_columns = {
@@ -152,50 +136,89 @@ with DAG(
             "acre_lot", "street", "city", "state", "zip_code",
             "house_size", "prev_sold_date",
         }
-        received_columns = set(data["data"][0].keys())
+
+        hook   = PostgresHook(postgres_conn_id="postgres_mlops")
+        conn   = hook.get_conn()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT brokered_by, status, price, bed, bath, acre_lot, street, city, state, zip_code, house_size, prev_sold_date "
+            "FROM raw.properties WHERE batch_id = %s LIMIT 1",
+            (batch_id,),
+        )
+        row = cursor.fetchone()
+        colnames = {desc[0] for desc in cursor.description}
+        conn.close()
+
+        if row is None:
+            logging.error("El batch no tiene registros en raw.properties.")
+            return {"valid": False, "reason": "sin registros en BD"}
+
+        missing = expected_columns - colnames
+        extra   = colnames - expected_columns
 
         logging.info(f"Columnas esperadas:  {sorted(expected_columns)}")
-        logging.info(f"Columnas recibidas:  {sorted(received_columns)}")
-
-        missing = expected_columns - received_columns
-        extra   = received_columns - expected_columns
+        logging.info(f"Columnas en BD:      {sorted(colnames)}")
 
         if missing:
-            logging.error(
-                f"Faltan {len(missing)} columnas obligatorias: {missing}. "
-                f"El batch no puede procesarse."
-            )
+            logging.error(f"Faltan {len(missing)} columnas obligatorias: {missing}.")
             return {"valid": False, "reason": f"columnas faltantes: {missing}"}
 
         if extra:
-            logging.warning(
-                f"El batch trae {len(extra)} columnas nuevas no esperadas: {extra}. "
-                f"Se ignoraran pero conviene revisarlas."
-            )
+            logging.warning(f"Columnas adicionales no esperadas: {extra}. Se ignoraran.")
 
         logging.info(f"Esquema correcto. Las {len(expected_columns)} columnas obligatorias estan presentes.")
         return {"valid": True, "extra_columns": list(extra)}
 
     # =========================================================================
-    # 4. VALIDAR CALIDAD DE DATOS
+    # 3. VALIDAR CALIDAD DE DATOS
+    # Lee todos los registros del batch desde raw.properties y verifica
+    # precios validos y nulos en columnas numericas clave.
     # =========================================================================
 
     @task
-    def validar_calidad_datos(batch_id: int, data: dict):
-        if data is None or batch_id is None:
-            logging.info("No hay datos que validar porque el batch vino vacio o no se almaceno.")
+    def validar_calidad_datos(batch_id: int):
+        if batch_id is None:
+            logging.info("Sin batch_id. No hay calidad que validar.")
             return {"valid": False, "reason": "sin datos"}
 
-        records = data["data"]
-        total   = len(records)
+        hook   = PostgresHook(postgres_conn_id="postgres_mlops")
+        conn   = hook.get_conn()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT price, bed, bath, acre_lot, house_size FROM raw.properties WHERE batch_id = %s",
+            (batch_id,),
+        )
+        rows = cursor.fetchall()
+        total = len(rows)
         logging.info(f"Validando calidad de {total} registros del batch_id={batch_id}...")
 
-        invalid_price     = sum(1 for r in records if not r.get("price") or r["price"] <= 0)
-        price_invalid_pct = invalid_price / total
+        # Menos de 10,000 registros no da suficiente señal para entrenar bien.
+        if total < MIN_BATCH_RECORDS:
+            conn.close()
+            logging.error(f"Batch demasiado pequeno: {total} registros (minimo={MIN_BATCH_RECORDS}).")
+            return {"valid": False, "reason": f"volumen insuficiente: {total} registros (minimo={MIN_BATCH_RECORDS})"}
+
+        # Un modelo entrenado con datos de menos de 10 estados no generaliza a nivel nacional.
+        cursor.execute(
+            "SELECT COUNT(DISTINCT state) FROM raw.properties WHERE batch_id = %s AND state IS NOT NULL",
+            (batch_id,),
+        )
+        n_states = cursor.fetchone()[0]
+        logging.info(f"Estados distintos en el batch: {n_states}")
+        if n_states < MIN_DISTINCT_STATES:
+            conn.close()
+            logging.error(f"Diversidad geografica insuficiente: {n_states} estados (minimo={MIN_DISTINCT_STATES}).")
+            return {"valid": False, "reason": f"baja diversidad geografica: {n_states} estados (minimo={MIN_DISTINCT_STATES})"}
+
+        conn.close()
+
+        invalid_price     = sum(1 for r in rows if not r[0] or r[0] <= 0)
+        price_invalid_pct = invalid_price / total if total > 0 else 1.0
 
         nulls = {
-            col: sum(1 for r in records if r.get(col) is None)
-            for col in ["bed", "bath", "acre_lot", "house_size"]
+            col: sum(1 for r in rows if r[i] is None)
+            for i, col in enumerate(["price", "bed", "bath", "acre_lot", "house_size"])
         }
 
         logging.info(f"Precios invalidos (nulos o <= 0): {invalid_price} de {total} ({price_invalid_pct:.1%})")
@@ -204,7 +227,7 @@ with DAG(
         if price_invalid_pct > 0.20:
             logging.error(
                 f"Calidad insuficiente: {price_invalid_pct:.1%} de los registros no tienen precio valido. "
-                f"El umbral maximo es 20%. El batch no sera usado para entrenamiento."
+                f"Umbral maximo: 20%."
             )
             return {"valid": False, "reason": f"demasiados precios invalidos: {price_invalid_pct:.1%}"}
 
@@ -212,34 +235,37 @@ with DAG(
         return {
             "valid": True,
             "total_records": total,
+            "n_distinct_states": n_states,
             "invalid_price_count": invalid_price,
             "nulls_per_column": nulls,
         }
 
     # =========================================================================
-    # 5. DETECTAR NUEVAS CATEGORIAS
-    # Compara las categorias del batch actual contra el historico en la BD.
+    # 4. DETECTAR NUEVAS CATEGORIAS
+    # Compara las categorias del batch actual contra el historico en raw.properties.
     # Solo cuenta categorias que aparecen >= MIN_CATEGORY_FREQ veces.
     # =========================================================================
 
     @task
-    def detectar_nuevas_categorias(data: dict, batch_id: int):
-        if data is None or batch_id is None:
+    def detectar_nuevas_categorias(batch_id: int):
+        if batch_id is None:
             return {"found": False, "new_categories": {}}
 
         from collections import Counter
+
         CATEGORICAL_COLS = ["status", "city", "state", "zip_code"]
 
-        # Frecuencia de cada valor en el batch actual
-        batch_cats = {
-            col: Counter(r.get(col) for r in data["data"] if r.get(col) is not None)
-            for col in CATEGORICAL_COLS
-        }
-
-        # Valores historicos vistos en batches anteriores
-        hook = PostgresHook(postgres_conn_id="postgres_mlops")
-        conn = hook.get_conn()
+        hook   = PostgresHook(postgres_conn_id="postgres_mlops")
+        conn   = hook.get_conn()
         cursor = conn.cursor()
+
+        batch_cats = {}
+        for col in CATEGORICAL_COLS:
+            cursor.execute(
+                f"SELECT {col} FROM raw.properties WHERE batch_id = %s AND {col} IS NOT NULL",
+                (batch_id,),
+            )
+            batch_cats[col] = Counter(row[0] for row in cursor.fetchall())
 
         historical_cats = {}
         for col in CATEGORICAL_COLS:
@@ -248,9 +274,9 @@ with DAG(
                 (batch_id,),
             )
             historical_cats[col] = {row[0] for row in cursor.fetchall()}
+
         conn.close()
 
-        # Nuevas categorias con frecuencia suficiente para afectar el modelo
         new_cats = {}
         for col in CATEGORICAL_COLS:
             nuevas = {
@@ -272,28 +298,30 @@ with DAG(
         return {"found": bool(new_cats), "new_categories": new_cats}
 
     # =========================================================================
-    # 6. DETECTAR DRIFT
+    # 5. DETECTAR DRIFT
     # KS test entre la distribucion del batch actual y el historico acumulado.
-    # Se evaluan las columnas numericas clave: price, bed, bath, acre_lot, house_size.
     # =========================================================================
 
     @task
-    def detectar_drift(data: dict, batch_id: int):
-        if data is None or batch_id is None:
+    def detectar_drift(batch_id: int):
+        if batch_id is None:
             return {"detected": False, "columns": {}, "reason": "sin datos"}
 
         from scipy import stats
 
         NUMERIC_COLS = ["price", "bed", "bath", "acre_lot", "house_size"]
 
-        batch_vals = {
-            col: [r[col] for r in data["data"] if r.get(col) is not None and r[col] > 0]
-            for col in NUMERIC_COLS
-        }
-
-        hook = PostgresHook(postgres_conn_id="postgres_mlops")
-        conn = hook.get_conn()
+        hook   = PostgresHook(postgres_conn_id="postgres_mlops")
+        conn   = hook.get_conn()
         cursor = conn.cursor()
+
+        batch_vals = {}
+        for col in NUMERIC_COLS:
+            cursor.execute(
+                f"SELECT {col} FROM raw.properties WHERE batch_id = %s AND {col} IS NOT NULL AND {col} > 0",
+                (batch_id,),
+            )
+            batch_vals[col] = [row[0] for row in cursor.fetchall()]
 
         hist_vals = {}
         for col in NUMERIC_COLS:
@@ -302,13 +330,14 @@ with DAG(
                 (batch_id,),
             )
             hist_vals[col] = [row[0] for row in cursor.fetchall()]
+
         conn.close()
 
         if all(len(v) == 0 for v in hist_vals.values()):
             logging.info("Sin datos historicos todavia. No se puede calcular drift para el primer batch.")
             return {"detected": False, "columns": {}, "reason": "primer batch, sin historico"}
 
-        drift_results = {}
+        drift_results  = {}
         drift_detected = False
 
         for col in NUMERIC_COLS:
@@ -340,17 +369,13 @@ with DAG(
         return {"detected": drift_detected, "columns": drift_results}
 
     # =========================================================================
-    # 7. PREPROCESAR DATOS
-    # Limpia el lote y lo escribe en clean.properties.
-    # Solo corre si el esquema y la calidad son validos.
+    # 6. PREPROCESAR DATOS
+    # Lee raw.properties para este batch, limpia y escribe en clean.properties.
     # =========================================================================
 
     @task
-    def preprocesar_datos(data: dict, batch_id: int, schema_ok: dict, quality_ok: dict):
-        # Guardamos los datos CRUDOS tal como llegan en raw.properties (tarea anterior).
-        # Esta tarea genera la version LIMPIA para entrenamiento en clean.properties.
-        # Solo corre si el esquema y la calidad pasaron las validaciones anteriores.
-        if data is None or batch_id is None:
+    def preprocesar_datos(batch_id: int, schema_ok: dict, quality_ok: dict):
+        if batch_id is None:
             logging.info("Sin datos que preprocesar.")
             return {"valid": False, "records_processed": 0}
 
@@ -363,15 +388,20 @@ with DAG(
 
         import pandas as pd
 
-        logging.info(f"Iniciando preprocesamiento de {len(data['data'])} registros del batch_id={batch_id}.")
-        logging.info("Objetivo: limpiar el lote crudo de raw.properties y escribir la version lista para entrenamiento en clean.properties.")
+        hook   = PostgresHook(postgres_conn_id="postgres_mlops")
+        engine = hook.get_sqlalchemy_engine()
+        df     = pd.read_sql(
+            "SELECT price, bed, bath, acre_lot, house_size, status, city, state, zip_code, prev_sold_date "
+            "FROM raw.properties WHERE batch_id = %(batch_id)s",
+            engine,
+            params={"batch_id": batch_id},
+        )
 
-        df = pd.DataFrame(data["data"])
+        logging.info(f"Iniciando preprocesamiento de {len(df)} registros del batch_id={batch_id}.")
+        logging.info("Objetivo: limpiar el lote crudo de raw.properties y escribir la version lista para entrenamiento en clean.properties.")
         logging.info(f"DataFrame creado con {len(df)} filas y {len(df.columns)} columnas.")
 
         # --- PASO 1: filtrar registros sin precio valido ---
-        # price es el target del modelo (lo que queremos predecir).
-        # Un registro sin precio no aporta al entrenamiento y lo descartamos.
         logging.info("PASO 1/4 — Eliminando registros con precio nulo o invalido (<= 0)...")
         before = len(df)
         df = df[df["price"].notna() & (df["price"] > 0)]
@@ -382,9 +412,6 @@ with DAG(
             logging.info(f"  Todos los registros tienen precio valido. Sin eliminaciones.")
 
         # --- PASO 2: imputar nulos en columnas numericas con la mediana ---
-        # No descartamos registros con bed/bath/etc nulos porque perderiamos
-        # demasiados datos. En cambio los rellenamos con la mediana del batch.
-        # Usamos mediana (no promedio) porque es robusta ante valores extremos.
         logging.info("PASO 2/4 — Imputando nulos en columnas numericas (bed, bath, acre_lot, house_size) con la mediana del batch...")
         for col in ["bed", "bath", "acre_lot", "house_size"]:
             n_null = df[col].isna().sum()
@@ -396,8 +423,6 @@ with DAG(
                 logging.info(f"  {col}: sin nulos.")
 
         # --- PASO 3: imputar nulos en columnas categoricas con 'unknown' ---
-        # Para texto no existe mediana. Usamos 'unknown' como categoria especial.
-        # El modelo esta entrenado para manejar esta categoria sin fallar.
         logging.info("PASO 3/4 — Imputando nulos en columnas categoricas (status, city, state, zip_code) con 'unknown'...")
         for col in ["status", "city", "state", "zip_code"]:
             n_null = df[col].isna().sum()
@@ -408,11 +433,8 @@ with DAG(
                 logging.info(f"  {col}: sin nulos.")
 
         # --- PASO 4: escribir en clean.properties ---
-        # Solo guardamos las columnas que usa el modelo (no todas las del raw).
-        # brokered_by y street no se incluyen porque son codigos sin valor predictivo claro.
         logging.info("PASO 4/4 — Escribiendo registros limpios en clean.properties...")
-        hook = PostgresHook(postgres_conn_id="postgres_mlops")
-        conn = hook.get_conn()
+        conn   = hook.get_conn()
         cursor = conn.cursor()
 
         records = [
@@ -441,15 +463,13 @@ with DAG(
             """,
             records,
         )
-
         conn.commit()
         conn.close()
         logging.info(f"{len(records)} registros del batch {batch_id} escritos en clean.properties.")
         return {"valid": True, "records_processed": len(records)}
 
     # =========================================================================
-    # 8. DECIDIR ENTRENAMIENTO (bifurcacion)
-    # Reglas tecnicas basadas en drift, categorias nuevas, volumen y calidad.
+    # 7. DECIDIR ENTRENAMIENTO (bifurcacion)
     # =========================================================================
 
     @task.branch
@@ -483,8 +503,8 @@ with DAG(
         if not preproceso.get("valid"):
             return _elegir("omitir_entrenamiento", "El preprocesamiento fallo o no produjo registros.")
 
-        hook = PostgresHook(postgres_conn_id="postgres_mlops")
-        conn = hook.get_conn()
+        hook   = PostgresHook(postgres_conn_id="postgres_mlops")
+        conn   = hook.get_conn()
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM raw.batch_audit")
         audit_count = cursor.fetchone()[0]
@@ -492,26 +512,22 @@ with DAG(
         total_clean = cursor.fetchone()[0]
         conn.close()
 
-        # Regla 1: primer batch — entrenar para establecer linea base
         if audit_count == 0:
             return _elegir(
                 "entrenar_modelo",
                 f"Primer batch del pipeline. {total_clean} registros limpios. Se establece la linea base."
             )
 
-        # Regla 2: volumen insuficiente — no entrenar
         if total_clean < MIN_RECORDS_TO_TRAIN:
             return _elegir(
                 "omitir_entrenamiento",
                 f"Solo hay {total_clean} registros limpios acumulados (minimo={MIN_RECORDS_TO_TRAIN})."
             )
 
-        # Regla 3: drift detectado en alguna columna — entrenar
         if drift.get("detected"):
             cols_drift = [c for c, r in drift.get("columns", {}).items() if r.get("drift")]
             return _elegir("entrenar_modelo", f"Drift estadistico detectado en columnas: {cols_drift}.")
 
-        # Regla 4: categorias nuevas relevantes — entrenar
         if nuevas_cat.get("found"):
             return _elegir("entrenar_modelo", "Se detectaron categorias nuevas relevantes en el batch.")
 
@@ -521,8 +537,7 @@ with DAG(
         )
 
     # =========================================================================
-    # 9. OMITIR ENTRENAMIENTO
-    # Rama cuando se decide no entrenar. Registra la decision en batch_audit.
+    # 8. OMITIR ENTRENAMIENTO
     # =========================================================================
 
     @task
@@ -532,8 +547,8 @@ with DAG(
 
         logging.info(f"Entrenamiento omitido para batch_id={batch_id}. Registrando en batch_audit...")
 
-        hook = PostgresHook(postgres_conn_id="postgres_mlops")
-        conn = hook.get_conn()
+        hook   = PostgresHook(postgres_conn_id="postgres_mlops")
+        conn   = hook.get_conn()
         cursor = conn.cursor()
         cursor.execute(
             """
@@ -547,9 +562,7 @@ with DAG(
         logging.info("Decision 'skip' registrada en batch_audit.")
 
     # =========================================================================
-    # 10. ENTRENAR MODELO
-    # Entrena un RandomForestRegressor sobre todos los datos limpios acumulados.
-    # Registra el modelo y parametros en MLflow.
+    # 9. ENTRENAR MODELO
     # =========================================================================
 
     @task
@@ -567,16 +580,18 @@ with DAG(
         NUMERIC_FEATS = ["bed", "bath", "acre_lot", "house_size"]
         CAT_FEATS     = ["status", "city", "state", "zip_code"]
 
-        logging.info(f"Cargando todos los datos limpios acumulados para entrenar (batch actual={batch_id})...")
+        # Entrenar solo con los datos del batch actual para que cada modelo sea comparable.
+        logging.info(f"Cargando datos del batch_id={batch_id} desde clean.properties...")
 
         hook   = PostgresHook(postgres_conn_id="postgres_mlops")
         engine = hook.get_sqlalchemy_engine()
-        df     = pd.read_sql(
-            "SELECT price, bed, bath, acre_lot, house_size, status, city, state, zip_code FROM clean.properties",
+        df = pd.read_sql(
+            "SELECT price, bed, bath, acre_lot, house_size, status, city, state, zip_code "
+            "FROM clean.properties WHERE batch_id = %(batch_id)s",
             engine,
+            params={"batch_id": batch_id},
         )
-
-        logging.info(f"Total registros disponibles para entrenamiento: {len(df)}")
+        logging.info(f"Registros del batch {batch_id}: {len(df)}")
 
         X = df[NUMERIC_FEATS + CAT_FEATS]
         y = df["price"]
@@ -592,9 +607,6 @@ with DAG(
             ]), CAT_FEATS),
         ])
 
-        # n_estimators=50 y max_depth=15 reducen el uso de memoria significativamente
-        # frente a los defaults (100 arboles sin limite de profundidad) sin sacrificar
-        # mucho desempeno en un dataset de este tamano.
         model = Pipeline([
             ("preprocessor", preprocessor),
             ("regressor",    RandomForestRegressor(
@@ -605,27 +617,27 @@ with DAG(
             )),
         ])
 
-        logging.info("Entrenando RandomForestRegressor (n_estimators=100)...")
+        logging.info("Entrenando RandomForestRegressor (n_estimators=50, max_depth=15)...")
         model.fit(X_train, y_train)
 
         mlflow.set_tracking_uri(MLFLOW_URI)
         mlflow.set_experiment(EXPERIMENT_NAME)
 
         with mlflow.start_run() as run:
-            run_id = run.info.run_id
-            mlflow.log_param("batch_id",      batch_id)
-            mlflow.log_param("n_estimators",  100)
-            mlflow.log_param("train_records", len(X_train))
-            mlflow.log_param("test_records",  len(X_test))
-            mlflow.log_param("features",      str(NUMERIC_FEATS + CAT_FEATS))
+            mlflow_run_id = run.info.run_id
+            mlflow.log_param("batch_id",       batch_id)
+            mlflow.log_param("n_estimators",   50)
+            mlflow.log_param("max_depth",      15)
+            mlflow.log_param("train_records",  len(X_train))
+            mlflow.log_param("test_records",   len(X_test))
+            mlflow.log_param("features",       str(NUMERIC_FEATS + CAT_FEATS))
             mlflow.sklearn.log_model(model, artifact_path="model")
 
-        logging.info(f"Modelo entrenado y guardado en MLflow. run_id={run_id}")
-        return run_id
+        logging.info(f"Modelo entrenado y guardado en MLflow. mlflow_run_id={mlflow_run_id}")
+        return mlflow_run_id
 
     # =========================================================================
-    # 11. EVALUAR MODELO
-    # Calcula MAE, RMSE y R2 sobre el conjunto de test y los registra en MLflow.
+    # 10. EVALUAR MODELO
     # =========================================================================
 
     @task
@@ -644,10 +656,13 @@ with DAG(
 
         hook   = PostgresHook(postgres_conn_id="postgres_mlops")
         engine = hook.get_sqlalchemy_engine()
-        df     = pd.read_sql(
-            "SELECT price, bed, bath, acre_lot, house_size, status, city, state, zip_code FROM clean.properties",
+        df = pd.read_sql(
+            "SELECT price, bed, bath, acre_lot, house_size, status, city, state, zip_code "
+            "FROM clean.properties WHERE batch_id = %(batch_id)s",
             engine,
+            params={"batch_id": batch_id},
         )
+        logging.info(f"Evaluando sobre {len(df)} registros del batch {batch_id}.")
 
         X = df[NUMERIC_FEATS + CAT_FEATS]
         y = df["price"]
@@ -671,9 +686,7 @@ with DAG(
         return {"run_id": mlflow_run_id, "mae": mae, "rmse": rmse, "r2": r2}
 
     # =========================================================================
-    # 12. COMPARAR CON EL MODELO EN PRODUCCION
-    # Si no existe modelo productivo, el candidato se promueve automaticamente.
-    # Si existe, compara MAE y RMSE.
+    # 11. COMPARAR CON EL MODELO EN PRODUCCION
     # =========================================================================
 
     @task
@@ -710,10 +723,7 @@ with DAG(
         should_promote = (mae_mejora >= MAE_IMPROVE_PCT) and (rmse_cambio <= MAX_RMSE_DEGRADE_PCT)
 
         if should_promote:
-            reason = (
-                f"Candidato mejora MAE en {mae_mejora:.2%} "
-                f"y RMSE solo varia {rmse_cambio:.2%}"
-            )
+            reason = f"Candidato mejora MAE en {mae_mejora:.2%} y RMSE solo varia {rmse_cambio:.2%}"
             logging.info(f"El candidato SUPERA al productivo. {reason}")
         else:
             reason = (
@@ -733,19 +743,19 @@ with DAG(
         }
 
     # =========================================================================
-    # 13. DECIDIR PROMOCION (bifurcacion)
+    # 12. DECIDIR PROMOCION (bifurcacion)
     # =========================================================================
 
     @task.branch
     def decidir_promocion(batch_id: int, comparison: dict):
         if comparison.get("should_promote"):
-            otra = "rechazar_modelo"
             elegida = "promover_modelo"
-            motivo = comparison.get("reason", "el candidato supera al modelo productivo")
+            otra    = "rechazar_modelo"
+            motivo  = comparison.get("reason", "el candidato supera al modelo productivo")
         else:
-            otra = "promover_modelo"
             elegida = "rechazar_modelo"
-            motivo = comparison.get("reason", "el candidato no supera al modelo productivo")
+            otra    = "promover_modelo"
+            motivo  = comparison.get("reason", "el candidato no supera al modelo productivo")
 
         logging.info("=" * 60)
         logging.info(f"DECISION DE PROMOCION")
@@ -756,8 +766,7 @@ with DAG(
         return elegida
 
     # =========================================================================
-    # 14. PROMOVER MODELO
-    # Registra el modelo en MLflow y le asigna el alias de produccion.
+    # 13. PROMOVER MODELO
     # =========================================================================
 
     @task
@@ -784,8 +793,8 @@ with DAG(
 
         logging.info(f"Modelo v{mv.version} registrado. Alias '{PROD_ALIAS}' actualizado.")
 
-        hook = PostgresHook(postgres_conn_id="postgres_mlops")
-        conn = hook.get_conn()
+        hook   = PostgresHook(postgres_conn_id="postgres_mlops")
+        conn   = hook.get_conn()
         cursor = conn.cursor()
         cursor.execute(
             """
@@ -805,9 +814,7 @@ with DAG(
         conn.close()
 
     # =========================================================================
-    # 15. RECHAZAR MODELO
-    # El candidato no supera al productivo. Queda registrado en MLflow pero
-    # no se actualiza el alias de produccion.
+    # 14. RECHAZAR MODELO
     # =========================================================================
 
     @task
@@ -818,8 +825,8 @@ with DAG(
 
         logging.warning(f"Modelo run_id={run_id} rechazado. Razon: {reason}")
 
-        hook = PostgresHook(postgres_conn_id="postgres_mlops")
-        conn = hook.get_conn()
+        hook   = PostgresHook(postgres_conn_id="postgres_mlops")
+        conn   = hook.get_conn()
         cursor = conn.cursor()
         cursor.execute(
             """
@@ -830,7 +837,7 @@ with DAG(
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
-                batch_id, "train", f"Entrenado pero rechazado",
+                batch_id, "train", "Entrenado pero rechazado",
                 run_id, candidate["mae"], candidate["rmse"], candidate["r2"],
                 False, reason,
             ),
@@ -840,10 +847,7 @@ with DAG(
         logging.info("Rechazo registrado en batch_audit. El modelo productivo actual se mantiene.")
 
     # =========================================================================
-    # 16. REGISTRAR RESULTADO FINAL
-    # Lee el estado final de batch_audit y lo resume en los logs.
-    # Usa trigger_rule NONE_FAILED_MIN_ONE_SUCCESS para correr despues de
-    # cualquiera de las ramas (skip, promover, rechazar).
+    # 15. REGISTRAR RESULTADO FINAL
     # =========================================================================
 
     @task(trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS)
@@ -852,8 +856,8 @@ with DAG(
             logging.info("Sin batch_id. No hay resultado que registrar.")
             return
 
-        hook = PostgresHook(postgres_conn_id="postgres_mlops")
-        conn = hook.get_conn()
+        hook   = PostgresHook(postgres_conn_id="postgres_mlops")
+        conn   = hook.get_conn()
         cursor = conn.cursor()
         cursor.execute(
             """
@@ -888,34 +892,29 @@ with DAG(
 
     # =========================================================================
     # DEFINICION DEL FLUJO
+    # obtener_lote_api retorna batch_id directamente — sin XCom grande
     # =========================================================================
 
-    batch_data = obtener_lote_api()
-    batch_id   = guardar_datos_postgres(batch_data)
+    batch_id = obtener_lote_api()
 
-    # Validaciones y detecciones corren en paralelo
-    schema_ok  = validar_columnas(batch_data)
-    quality_ok = validar_calidad_datos(batch_id, batch_data)
-    nuevas_cat = detectar_nuevas_categorias(batch_data, batch_id)
-    drift      = detectar_drift(batch_data, batch_id)
-    preproceso = preprocesar_datos(batch_data, batch_id, schema_ok, quality_ok)
+    schema_ok  = validar_columnas(batch_id)
+    quality_ok = validar_calidad_datos(batch_id)
+    nuevas_cat = detectar_nuevas_categorias(batch_id)
+    drift      = detectar_drift(batch_id)
+    preproceso = preprocesar_datos(batch_id, schema_ok, quality_ok)
 
-    # Bifurcacion: entrenar o no
-    branch1    = decidir_entrenamiento(batch_id, schema_ok, quality_ok, nuevas_cat, drift, preproceso)
-    skip       = omitir_entrenamiento(batch_id)
+    branch1       = decidir_entrenamiento(batch_id, schema_ok, quality_ok, nuevas_cat, drift, preproceso)
+    skip          = omitir_entrenamiento(batch_id)
     mlflow_run_id = entrenar_modelo(batch_id)
     metrics       = evaluar_modelo(batch_id, mlflow_run_id)
     comparison    = comparar_con_produccion(batch_id, metrics)
 
-    # Bifurcacion: promover o rechazar
     branch2  = decidir_promocion(batch_id, comparison)
     promote  = promover_modelo(batch_id, comparison)
     reject   = rechazar_modelo(batch_id, comparison)
 
-    # Convergencia final
     fin = registrar_resultado(batch_id)
 
-    # Control flow de las bifurcaciones
     branch1 >> [skip, mlflow_run_id]
     branch2 >> [promote, reject]
     [skip, promote, reject] >> fin
