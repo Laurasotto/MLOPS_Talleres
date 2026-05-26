@@ -106,6 +106,45 @@ El flujo es: el batch llega y se almacena en `raw.properties` sin tocar. Airflow
 
 ---
 
+## Pipeline DAG
+
+El DAG principal se llama `dag_mlops_pipeline` y se ejecuta manualmente o por schedule. Esta compuesto por 16 tareas organizadas en dos bifurcaciones en secuencia: la primera decide si se entrena, y la segunda decide si el modelo entrenado reemplaza al que esta en produccion.
+
+### Ingesta y validacion
+
+Cada corrida comienza en `obtener_lote_api`, que consulta el endpoint `/data?group_number=4` de la API del docente y persiste el batch completo en `raw.batches` y `raw.properties`. La tarea retorna solo el `batch_id` (un entero) para evitar que el XCom serialice cientos de miles de registros — aprendimos esto por las malas cuando el scheduler se caia con OOMKill al intentar pasar 230k filas como JSON entre tareas.
+
+Con el `batch_id` disponible, cuatro tareas corren en paralelo:
+
+- `validar_columnas` comprueba que el batch traiga todas las columnas esperadas.
+- `validar_calidad_datos` aplica tres checks sobre `raw.properties`: primero verifica que el batch tenga al menos 10,000 registros (batches muy pequenos no tienen suficientes datos para que el modelo aprenda bien), luego cuenta los estados de USA distintos y rechaza el batch si tiene menos de 10 (un modelo entrenado con datos de un solo estado no generaliza a nivel nacional), y finalmente verifica que no mas del 20% de los precios sean invalidos o cero.
+- `detectar_nuevas_categorias` compara las categorias de `city`, `state`, `zip_code` y `status` del batch actual contra el historico para identificar valores que el modelo en produccion nunca vio.
+- `detectar_drift` aplica el test KS sobre las variables numericas comparando el batch actual contra los anteriores.
+
+### Decision de entrenamiento
+
+`decidir_entrenamiento` consolida los resultados de las cuatro validaciones y elige entre `entrenar_modelo` y `omitir_entrenamiento`. La logica es: si cualquier validacion falla (schema invalido, calidad insuficiente, preprocesamiento fallido) se omite sin discusion. Si el batch pasa todas las validaciones pero no hay drift ni categorias nuevas, tambien se omite porque no hay evidencia de que el modelo deba actualizarse. Solo se entrena si se detecto drift estadistico o categorias nuevas, o si es el primer batch del pipeline y se necesita establecer una linea base.
+
+Esto significa que el batch 3 del dataset (4,055 registros, un unico estado de USA) siempre sera skipeado por `validar_calidad_datos` antes de llegar a `decidir_entrenamiento`, lo cual es el comportamiento correcto dado que ese batch es claramente anomalo.
+
+### Entrenamiento y evaluacion
+
+`preprocesar_datos` aplica limpieza basica, descarta `street` y `brokered_by`, y escribe el resultado en `clean.properties` con el `batch_id` correspondiente.
+
+`entrenar_modelo` lee exclusivamente los registros del batch actual desde `clean.properties` usando `WHERE batch_id = %s`. Decidimos entrenar por batch y no sobre el acumulado historico para que cada modelo sea comparable con los demas: si entrenamos sobre el acumulado, el modelo del batch 5 siempre tendra mas datos y ganara por volumen, no por calidad de los datos. Con esta estrategia, un batch grande tiene ventaja real solo si sus datos son mejores.
+
+El modelo es un `RandomForestRegressor` con sklearn, y se guarda como artefacto en MLflow junto con el pipeline completo de preprocesamiento. `evaluar_modelo` calcula MAE, RMSE y R² sobre el 20% de test del mismo batch y los registra en el run de MLflow.
+
+### Decision de promocion
+
+`comparar_con_produccion` recupera las metricas del modelo que tiene el alias `production` en el MLflow Model Registry y las compara con el candidato. Para que un candidato reemplace al champion necesita mejorar el MAE en al menos 3% sin degradar el RMSE mas de 1%.
+
+`decidir_promocion` bifurca hacia `promover_modelo` o `rechazar_modelo`. Si se promueve, el nuevo modelo recibe el alias `production` en el registry. Si no hay ningun modelo productivo todavia, el primer candidato valido se promueve automaticamente para establecer la linea base.
+
+`registrar_resultado` cierra cada corrida escribiendo en `raw.batch_audit` la decision final, las metricas del candidato y el motivo de promocion o rechazo. Esta tabla es la fuente de verdad para el dashboard de Streamlit.
+
+---
+
 ## Acceso a los servicios
 
 Todos los servicios corren en el cluster Kubernetes local (Docker Desktop). Las URLs son accesibles desde el host una vez aplicados los manifiestos.
