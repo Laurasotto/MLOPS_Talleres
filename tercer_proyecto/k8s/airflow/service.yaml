@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-webserver
+  namespace: airflow
+spec:
+  type: NodePort
+  selector:
+    app: airflow-webserver
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30810
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-scheduler-logs
+  namespace: airflow
+spec:
+  # El scheduler expone los logs de tareas en el puerto 8793.
+  # El webserver llama a este servicio para mostrar los logs en la UI.
+  type: ClusterIP
+  selector:
+    app: airflow-scheduler
+  ports:
+    - port: 8793
+      targetPort: 8793

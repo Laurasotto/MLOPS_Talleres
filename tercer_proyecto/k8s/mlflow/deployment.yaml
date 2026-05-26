@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow
+  namespace: mlflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      initContainers:
+        # Crea el bucket mlflow-artifacts en MinIO antes de arrancar el servidor
+        - name: create-minio-bucket
+          image: minio/mc:latest
+          command:
+            - sh
+            - -c
+            - |
+              mc alias set local http://minio-service.minio.svc.cluster.local:9000 minioadmin minioadmin123 &&
+              mc mb local/mlflow-artifacts --ignore-existing
+      containers:
+        - name: mlflow
+          image: thomasriverafonseca/p3-mlflow:latest
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - secretRef:
+                name: mlflow-secret
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 15
+            failureThreshold: 5

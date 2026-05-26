@@ -1,1 +1,9 @@
-# dependencias adicionales para Airflow
+apache-airflow-providers-postgres
+apache-airflow-providers-http
+apache-airflow-providers-amazon
+requests
+pandas
+scikit-learn
+mlflow==2.13.0
+scipy
+psycopg2-binary

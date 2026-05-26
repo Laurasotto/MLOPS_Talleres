@@ -28,7 +28,17 @@ spec:
                 --firstname Admin \
                 --lastname Admin \
                 --role Admin \
-                --email admin@grupo4.com || true
+                --email admin@grupo4.com || true &&
+              airflow connections add postgres_mlops \
+                --conn-type postgres \
+                --conn-host postgres-service.postgres.svc.cluster.local \
+                --conn-schema mlops \
+                --conn-login grupo4 \
+                --conn-password grupo4pass \
+                --conn-port 5432 || true &&
+              airflow connections add minio_s3 \
+                --conn-type aws \
+                --conn-extra '{"endpoint_url":"http://minio-service.minio.svc.cluster.local:9000","aws_access_key_id":"minioadmin","aws_secret_access_key":"minioadmin123","region_name":"us-east-1"}' || true
           envFrom:
             - secretRef:
                 name: airflow-secret
@@ -37,10 +47,10 @@ spec:
           resources:
             requests:
               cpu: "100m"
-              memory: "256Mi"
-            limits:
-              cpu: "300m"
               memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
           volumeMounts:
             - name: logs
               mountPath: /opt/airflow/logs
@@ -61,13 +71,15 @@ spec:
               cpu: "250m"
               memory: "512Mi"
             limits:
-              cpu: "500m"
-              memory: "1Gi"
+              cpu: "1000m"
+              memory: "4Gi"
           livenessProbe:
             exec:
               command: ["airflow", "jobs", "check", "--job-type", "SchedulerJob"]
-            initialDelaySeconds: 30
-            periodSeconds: 30
+            initialDelaySeconds: 120
+            periodSeconds: 60
+            timeoutSeconds: 30
+            failureThreshold: 5
       volumes:
         - name: logs
           persistentVolumeClaim:
@@ -108,19 +120,23 @@ spec:
               memory: "512Mi"
             limits:
               cpu: "500m"
-              memory: "1Gi"
+              memory: "1536Mi"
           readinessProbe:
             httpGet:
               path: /health
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 6
           livenessProbe:
             httpGet:
               path: /health
               port: 8080
             initialDelaySeconds: 60
-            periodSeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 30
+            failureThreshold: 5
       volumes:
         - name: logs
           persistentVolumeClaim:

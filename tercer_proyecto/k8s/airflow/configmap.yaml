@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airflow-config
+  namespace: airflow
+data:
+  AIRFLOW__CORE__EXECUTOR: "LocalExecutor"
+  AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+  AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+  AIRFLOW__WEBSERVER__WORKERS: "2"
+  AIRFLOW__WEBSERVER__WORKER_TIMEOUT: "120"
+  AIRFLOW__LOGGING__REMOTE_LOGGING: "True"
+  AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER: "s3://airflow-logs/logs"
+  AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID: "minio_s3"
+  AIRFLOW__LOGGING__ENCRYPT_S3_LOGS: "False"
+  AIRFLOW__LOGGING__LOG_FETCH_TIMEOUT_SEC: "30"
+  AIRFLOW__LOGGING__LOG_FETCH_DELAY_SEC: "2"
+  DATA_API_URL: "http://host.docker.internal:8000"
+  MLFLOW_TRACKING_URI: "http://mlflow-service.mlflow.svc.cluster.local:5000"
+  MLFLOW_S3_ENDPOINT_URL: "http://minio-service.minio.svc.cluster.local:9000"
+  AWS_ACCESS_KEY_ID: "minioadmin"
+  AWS_SECRET_ACCESS_KEY: "minioadmin123"
