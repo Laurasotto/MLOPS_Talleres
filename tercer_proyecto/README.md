@@ -154,12 +154,12 @@ Todos los servicios corren en el cluster Kubernetes local (Docker Desktop). Las 
 | Airflow UI | http://localhost:30810 | `admin` / `admin123` |
 | MLflow UI | http://localhost:30501 | sin autenticacion |
 | MinIO Console | http://localhost:30902 | `minioadmin` / `minioadmin123` |
-| FastAPI (inferencia) | http://localhost:30800 | — |
+| FastAPI (inferencia) | http://localhost:30801 | — |
 | Streamlit | http://localhost:30851 | — |
 | Grafana | http://localhost:30300 | `admin` / `admin` |
 | Prometheus | http://localhost:30909 | sin autenticacion |
 
-> Los servicios de FastAPI, Streamlit, Grafana y Prometheus aun no estan desplegados.
+> Los servicios de Streamlit, Grafana y Prometheus aun no estan desplegados.
 
 ---
 
@@ -169,7 +169,7 @@ Todos los servicios corren en el cluster Kubernetes local (Docker Desktop). Las 
 - [x] Diseno de manifiestos de Kubernetes por namespace
 - [x] Implementacion del DAG principal de Airflow (16 tareas, bifurcaciones, audit)
 - [x] Configuracion de MLflow con PostgreSQL y MinIO
-- [ ] Implementacion de FastAPI con recarga de modelo desde MLflow
+- [x] Implementacion de FastAPI con recarga de modelo desde MLflow
 - [ ] Implementacion de Streamlit
 - [ ] Configuracion de Prometheus y Grafana
 - [ ] Workflows de GitHub Actions para construccion y publicacion de imagenes
