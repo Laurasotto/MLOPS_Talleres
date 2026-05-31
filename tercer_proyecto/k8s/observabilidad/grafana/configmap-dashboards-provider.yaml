@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-provider
+  namespace: observabilidad
+data:
+  dashboard.yml: |
+    apiVersion: 1
+    providers:
+      # Le dice a Grafana que cargue los dashboards desde archivos JSON en disco.
+      # type: file significa que busca en la carpeta indicada en path.
+      # allowUiUpdates: true permite editar los dashboards desde la UI sin que se pierdan.
+      - name: "MLOps Observability"
+        orgId: 1
+        folder: "MLOps"
+        type: file
+        disableDeletion: false
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: observabilidad
+data:
+  prometheus.yml: |
+    apiVersion: 1
+    datasources:
+      # Le dice a Grafana de dónde sacar los datos.
+      # access: proxy significa que Grafana consulta a Prometheus por su cuenta,
+      # el navegador del usuario nunca habla directo con Prometheus.
+      - name: Prometheus
+        uid: prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-service.observabilidad.svc.cluster.local:9090
+        isDefault: true
+        editable: true

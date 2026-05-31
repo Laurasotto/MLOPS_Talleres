@@ -1,15 +1,15 @@
-# Construye y sube la imagen de Streamlit a DockerHub.
-# Se activa solo cuando cambia algo dentro de tercer_proyecto/streamlit/,
-# por ejemplo si se modifica el dashboard, los requirements o la imagen de la casa.
+# Construye y sube la imagen del servidor de MLflow a DockerHub.
+# Se activa solo cuando cambia algo dentro de tercer_proyecto/mlflow/,
+# por ejemplo si se actualiza la versión de MLflow o el Dockerfile.
 
-name: Build y Push Streamlit
+name: Build y Push MLflow
 
 on:
   push:
     branches:
       - main
     paths:
-      - "tercer_proyecto/streamlit/**"
+      - "tercer_proyecto/mlflow/**"
 
 jobs:
   build-and-push:
@@ -31,6 +31,6 @@ jobs:
       - name: Build y Push
         uses: docker/build-push-action@v5
         with:
-          context: tercer_proyecto/streamlit
+          context: tercer_proyecto/mlflow
           push: true
-          tags: thomasriverafonseca/p3-streamlit:latest
+          tags: thomasriverafonseca/p3-mlflow:latest

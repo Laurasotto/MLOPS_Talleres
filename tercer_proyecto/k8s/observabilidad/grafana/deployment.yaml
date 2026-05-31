@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: observabilidad
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:11.0.0
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: "admin"
+          volumeMounts:
+            # Grafana lee los datasources desde esta carpeta al arrancar
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources
+            # Grafana lee el proveedor de dashboards desde esta carpeta
+            - name: dashboards-provider
+              mountPath: /etc/grafana/provisioning/dashboards
+            # Los archivos JSON de dashboards van en esta carpeta
+            - name: dashboards-json
+              mountPath: /var/lib/grafana/dashboards
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+      volumes:
+        - name: datasources
+          configMap:
+            name: grafana-datasources
+        - name: dashboards-provider
+          configMap:
+            name: grafana-dashboards-provider
+        - name: dashboards-json
+          configMap:
+            name: grafana-dashboard-json
