@@ -10,6 +10,8 @@ on:
       - main
     paths:
       - "tercer_proyecto/fastapi/**"
+  # Permite correr el workflow manualmente desde la UI de GitHub
+  workflow_dispatch:
 
 jobs:
   build-and-push:

@@ -10,6 +10,7 @@ on:
       - main
     paths:
       - "tercer_proyecto/airflow/**"
+  workflow_dispatch:
 
 jobs:
   build-and-push:
