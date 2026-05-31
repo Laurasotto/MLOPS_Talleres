@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: p3-airflow
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Laurasotto/MLOPS_Talleres.git
+    targetRevision: main
+    path: tercer_proyecto/k8s/airflow
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: airflow
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
