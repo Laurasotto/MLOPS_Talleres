@@ -173,3 +173,30 @@ Todos los servicios corren en el cluster Kubernetes local (Docker Desktop). Las 
 | Prometheus | `observabilidad` | `10.103.70.185` | http://localhost:30910 |
 | PostgreSQL | `postgres` | `10.97.182.122` | solo interno (ClusterIP) |
 | Streamlit | `streamlit` | `10.108.192.161` | http://localhost:30852 |
+
+---
+
+## Apagar y volver a levantar
+
+### Apagar todo
+
+```bash
+kubectl delete namespace airflow inference minio mlflow observabilidad streamlit postgres
+cd tercer_proyecto/locust && docker compose down
+```
+
+**Importante:** al borrar el namespace `postgres` se pierden todos los datos — batches, modelos y registros de inferencia. Al volver a levantar hay que correr el DAG desde cero.
+
+### Volver a levantar
+
+```bash
+kubectl apply -f tercer_proyecto/k8s/postgres/
+kubectl apply -f tercer_proyecto/k8s/minio/
+kubectl apply -f tercer_proyecto/k8s/mlflow/
+kubectl apply -f tercer_proyecto/k8s/airflow/
+kubectl apply -f tercer_proyecto/k8s/inference/
+kubectl apply -f tercer_proyecto/k8s/streamlit/
+kubectl apply -f tercer_proyecto/k8s/observabilidad/ --recursive
+```
+
+Espera 2-3 minutos a que todos los pods arranquen, luego entra a Airflow (http://localhost:30810) y activa el DAG `dag_mlops_pipeline` para repoblar la base de datos.
