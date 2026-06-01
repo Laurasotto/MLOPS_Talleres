@@ -155,23 +155,21 @@ Todos los servicios corren en el cluster Kubernetes local (Docker Desktop). Las 
 | MLflow UI | http://localhost:30501 | sin autenticacion |
 | MinIO Console | http://localhost:30902 | `minioadmin` / `minioadmin123` |
 | FastAPI (inferencia) | http://localhost:30801 | — |
-| Streamlit | http://localhost:30851 | — |
-| Grafana | http://localhost:30300 | `admin` / `admin` |
-| Prometheus | http://localhost:30909 | sin autenticacion |
-
-> Los servicios de Streamlit, Grafana y Prometheus aun no estan desplegados.
+| Streamlit | http://localhost:30852 | — |
+| Grafana | http://localhost:30301 | `admin` / `admin` |
+| Prometheus | http://localhost:30910 | sin autenticacion |
 
 ---
 
-## Estado actual
+## Servicios en Kubernetes
 
-- [x] Exploracion y documentacion de la API del docente
-- [x] Diseno de manifiestos de Kubernetes por namespace
-- [x] Implementacion del DAG principal de Airflow (16 tareas, bifurcaciones, audit)
-- [x] Configuracion de MLflow con PostgreSQL y MinIO
-- [x] Implementacion de FastAPI con recarga de modelo desde MLflow
-- [ ] Implementacion de Streamlit
-- [ ] Configuracion de Prometheus y Grafana
-- [ ] Workflows de GitHub Actions para construccion y publicacion de imagenes
-- [ ] Configuracion de Argo CD para sincronizacion GitOps
-- [ ] Pruebas de carga con Locust
+| Componente | Namespace | Cluster IP | URL externa |
+|---|---|---|---|
+| Airflow Webserver | `airflow` | `10.103.64.212` | http://localhost:30810 |
+| FastAPI Inferencia | `inference` | `10.105.120.216` | http://localhost:30801 |
+| MinIO Console | `minio` | `10.97.153.193` | http://localhost:30902 |
+| MLflow UI | `mlflow` | `10.109.179.11` | http://localhost:30501 |
+| Grafana | `observabilidad` | `10.107.56.218` | http://localhost:30301 |
+| Prometheus | `observabilidad` | `10.103.70.185` | http://localhost:30910 |
+| PostgreSQL | `postgres` | `10.97.182.122` | solo interno (ClusterIP) |
+| Streamlit | `streamlit` | `10.108.192.161` | http://localhost:30852 |
