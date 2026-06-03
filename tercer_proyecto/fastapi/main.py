@@ -1,3 +1,4 @@
+# esto es un comentario para probar el Argo CD
 # API de inferencia para predecir el precio de propiedades inmobiliarias.
 # Carga el modelo que esté marcado como "production" en el MLflow Registry
 # y lo sirve a través de un endpoint REST. Cada predicción queda registrada
