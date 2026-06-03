@@ -25,6 +25,7 @@ Una vez levantado el sistema, todos los servicios son accesibles desde el navega
 | Streamlit | http://localhost:30852 | — |
 | Grafana | http://localhost:30301 | `admin` / `admin` |
 | Prometheus | http://localhost:30910 | sin autenticacion |
+| Locust | http://localhost:8089 | sin autenticacion |
 
 ---
 
