@@ -242,6 +242,7 @@ El modelo es un `RandomForestRegressor` con sklearn, y se guarda como artefacto 
 
 ```bash
 kubectl delete namespace airflow inference minio mlflow observabilidad streamlit postgres
+docker stop data-api
 cd tercer_proyecto/locust && docker compose down
 ```
 
