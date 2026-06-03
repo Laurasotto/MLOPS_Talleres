@@ -34,4 +34,5 @@ jobs:
         with:
           context: tercer_proyecto/airflow
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: thomasriverafonseca/p3-airflow:latest

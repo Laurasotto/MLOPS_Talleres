@@ -17,6 +17,7 @@ spec:
         # Inicializa la BD de Airflow y crea el usuario admin antes de arrancar
         - name: airflow-init
           image: thomasriverafonseca/p3-airflow:latest
+          imagePullPolicy: Never
           command:
             - bash
             - -c
@@ -57,6 +58,7 @@ spec:
       containers:
         - name: scheduler
           image: thomasriverafonseca/p3-airflow:latest
+          imagePullPolicy: Never
           command: ["airflow", "scheduler"]
           envFrom:
             - secretRef:
@@ -103,6 +105,7 @@ spec:
       containers:
         - name: webserver
           image: thomasriverafonseca/p3-airflow:latest
+          imagePullPolicy: Never
           command: ["airflow", "webserver"]
           ports:
             - containerPort: 8080

@@ -16,7 +16,7 @@ spec:
       containers:
         - name: inference-api
           image: thomasriverafonseca/p3-inference:latest
-          imagePullPolicy: Always
+          imagePullPolicy: Never
           ports:
             - containerPort: 8000
           envFrom:

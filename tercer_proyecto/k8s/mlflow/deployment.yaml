@@ -26,6 +26,7 @@ spec:
       containers:
         - name: mlflow
           image: thomasriverafonseca/p3-mlflow:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 5000
           envFrom:

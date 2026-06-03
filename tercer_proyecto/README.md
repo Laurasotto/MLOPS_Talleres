@@ -12,6 +12,94 @@ Todos los componentes se despliegan en Kubernetes, con imagenes construidas y pu
 
 ---
 
+## Acceso a los servicios
+
+Una vez levantado el sistema, todos los servicios son accesibles desde el navegador:
+
+| Servicio | URL | Credenciales |
+|---|---|---|
+| Airflow UI | http://localhost:30810 | `admin` / `admin123` |
+| MLflow UI | http://localhost:30501 | sin autenticacion |
+| MinIO Console | http://localhost:30902 | `minioadmin` / `minioadmin123` |
+| FastAPI (inferencia) | http://localhost:30801/docs | — |
+| Streamlit | http://localhost:30852 | — |
+| Grafana | http://localhost:30301 | `admin` / `admin` |
+| Prometheus | http://localhost:30910 | sin autenticacion |
+
+---
+
+## Iniciar el sistema
+
+```bash
+kubectl apply -f tercer_proyecto/k8s/postgres/
+kubectl apply -f tercer_proyecto/k8s/minio/
+kubectl apply -f tercer_proyecto/k8s/mlflow/
+kubectl apply -f tercer_proyecto/k8s/airflow/
+kubectl apply -f tercer_proyecto/k8s/inference/
+kubectl apply -f tercer_proyecto/k8s/streamlit/
+kubectl apply -f tercer_proyecto/k8s/observabilidad/ --recursive
+```
+
+Espera 2-3 minutos a que todos los pods arranquen. Luego entra a Airflow (http://localhost:30810) y activa el DAG `dag_mlops_pipeline` para empezar a consumir datos.
+
+Para verificar que todo este corriendo:
+
+```bash
+kubectl get pods -A | grep -E "postgres|airflow|mlflow|minio|inference|streamlit|observabilidad"
+```
+
+---
+
+## Componentes
+
+### PostgreSQL
+
+Es la base de datos central del sistema. Usamos una sola instancia con tres schemas separados: `raw` para los datos tal como llegan de la API, `clean` para los datos procesados y listos para entrenamiento, y `mlflow` que lo crea automaticamente el servidor de MLflow al arrancar. Elegimos PostgreSQL porque Airflow, MLflow y la API de inferencia ya lo soportan nativamente, y nos evita tener que correr multiples bases de datos.
+
+### MinIO
+
+Es el almacenamiento de objetos que usamos como backend de artefactos para MLflow. Funciona con la misma API que S3 de AWS, lo que significa que MLflow lo trata exactamente igual que si estuviera en la nube. Aqui se guardan los modelos entrenados, los pipelines de preprocesamiento y cualquier artefacto que MLflow registre durante un experimento. Tiene dos buckets: `mlflow-artifacts` para los artefactos del modelo registry y `airflow-logs` para los logs remotos de Airflow.
+
+### MLflow
+
+Es el corazon del ciclo de vida del modelo. Cada vez que Airflow entrena un modelo nuevo, lo registra en MLflow con sus metricas (MAE, RMSE, R²) y sus artefactos (el pipeline de sklearn completo). El Model Registry de MLflow es lo que nos permite tener el concepto de modelo en produccion: cuando un candidato supera al campeon actual, recibe el alias `production` y la API de inferencia lo carga automaticamente en el proximo reinicio. Usamos la version 2.13.0 porque encontramos problemas de compatibilidad con versiones mas recientes del cliente contra este servidor.
+
+### Airflow
+
+Es el orquestador del pipeline. Corre el DAG `dag_mlops_pipeline` que consume un batch de datos de la API del docente, lo valida, lo procesa, decide si tiene sentido entrenar un modelo nuevo, lo entrena, lo evalua y decide si debe reemplazar al que esta en produccion. Todo esto de forma automatica y con trazabilidad completa en la tabla `raw.batch_audit`. El scheduler y el webserver comparten un PVC para los logs, de forma que la UI de Airflow puede mostrar los logs de cada tarea directamente.
+
+### FastAPI
+
+Es la API de inferencia que queda expuesta al mundo. Carga al arrancar el modelo que tenga el alias `production` en el MLflow Model Registry y lo sirve a traves de un endpoint `POST /predict`. Cada prediccion queda registrada en la tabla `raw.inference_events` de PostgreSQL para trazabilidad. Tambien expone un endpoint `GET /metrics` en formato Prometheus para que Grafana pueda graficarlo, y un `POST /reload-model` por si se necesita forzar la recarga del modelo sin reiniciar el pod.
+
+### Streamlit
+
+Es el dashboard de monitoreo y prediccion manual. Tiene dos partes: una vista de auditoría que muestra el historial de batches procesados con sus decisiones de entrenamiento y metricas, leyendo directamente de `raw.batch_audit`; y un formulario de prediccion donde se pueden ingresar las caracteristicas de una propiedad y obtener el precio estimado llamando a la API de inferencia. Lo conectamos directamente a PostgreSQL para la parte de monitoreo y a FastAPI para las predicciones.
+
+### Prometheus y Grafana
+
+Son la capa de observabilidad del sistema. Prometheus hace scraping cada 5 segundos del endpoint `/metrics` de la API de inferencia y almacena las series de tiempo. Grafana lee esas series y las muestra en un dashboard preconfigurado con paneles para el volumen de predicciones por minuto, la latencia promedio y el percentil 95. Ambos corren en el namespace `observabilidad`.
+
+Las metricas que expone la API son:
+- `predict_requests_total` — contador de predicciones realizadas
+- `predict_latency_seconds` — histograma de latencia por prediccion
+
+### Locust
+
+Es la herramienta de pruebas de carga. Corre fuera de Kubernetes (con Docker Compose) y genera trafico sintetico contra la API de inferencia para simular multiples usuarios haciendo predicciones al mismo tiempo. Nos sirve para verificar que la API aguanta carga razonable y para poblar las graficas de Prometheus y Grafana con datos reales. Para levantarlo:
+
+```bash
+cd tercer_proyecto/locust
+docker compose up --build
+# Locust UI → http://localhost:8089
+```
+
+### Argo CD
+
+Es el componente GitOps del sistema. Sincroniza automaticamente el estado del cluster de Kubernetes con los manifiestos que estan en el repositorio de GitHub. Cuando se hace un push a `main` con cambios en los manifiestos de `k8s/`, Argo CD detecta la diferencia y aplica los cambios al cluster sin intervencion manual. Cada componente tiene su propia Application en Argo CD, lo que permite ver el estado de sincronizacion de cada namespace por separado.
+
+---
+
 ## Fuente de datos
 
 Los datos se obtienen de una API externa provista por el docente. La imagen de Docker es `cristiandiaz13/mlops-puj:data-api-pf-v1`.
@@ -30,7 +118,7 @@ docker run --rm -p 8000:80 cristiandiaz13/mlops-puj:data-api-pf-v1
 | `/data?group_number=4` | GET | Obtiene el siguiente batch de datos para el grupo |
 | `/restart_data_generation?group_number=4` | GET | Reinicia la secuencia de batches al batch 0 |
 
-Cada llamada a `/data` avanza al siguiente batch. Cuando se agotan todos los batches disponibles, la API responde con HTTP 400 y el mensaje `"Ya se recolecto toda la informacion minima necesaria"`. El cliente implementado en Airflow debe manejar ese caso explicitamente.
+Cada llamada a `/data` avanza al siguiente batch. Cuando se agotan todos los batches disponibles, la API responde con HTTP 400 y el mensaje `"Ya se recolecto toda la informacion minima necesaria"`. El cliente implementado en Airflow maneja ese caso explicitamente.
 
 ---
 
@@ -100,7 +188,7 @@ Decidimos usar una sola instancia de PostgreSQL con tres schemas separados: `raw
 |---|---|
 | `clean.properties` | Datos transformados y listos para entrenamiento |
 
-Decidimos botar `street` y `brokered_by` en el paso de limpieza porque son IDs numericos codificados sin significado semantico recuperable. Las variables categoricas restantes (`zip_code`, `city`, `state`, `status`) se guardan como texto. Estamos pensando en aplicar el encoding como parte del pipeline de sklearn durante el entrenamiento y guardar ese pipeline como artefacto en MLflow junto al modelo, para garantizar consistencia entre entrenamiento e inferencia.
+Decidimos botar `street` y `brokered_by` en el paso de limpieza porque son IDs numericos codificados sin significado semantico recuperable. Las variables categoricas restantes (`zip_code`, `city`, `state`, `status`) se guardan como texto. El encoding se aplica como parte del pipeline de sklearn durante el entrenamiento y ese pipeline se guarda como artefacto en MLflow junto al modelo, para garantizar consistencia entre entrenamiento e inferencia.
 
 El flujo es: el batch llega y se almacena en `raw.properties` sin tocar. Airflow aplica la limpieza basica y guarda el resultado en `clean.properties`. Cuando el DAG decide entrenar, la tarea de entrenamiento lee desde `clean.properties`, aplica el encoding y entrena el modelo.
 
@@ -145,22 +233,6 @@ El modelo es un `RandomForestRegressor` con sklearn, y se guarda como artefacto 
 
 ---
 
-## Acceso a los servicios
-
-Todos los servicios corren en el cluster Kubernetes local (Docker Desktop). Las URLs son accesibles desde el host una vez aplicados los manifiestos.
-
-| Servicio | URL | Credenciales |
-|---|---|---|
-| Airflow UI | http://localhost:30810 | `admin` / `admin123` |
-| MLflow UI | http://localhost:30501 | sin autenticacion |
-| MinIO Console | http://localhost:30902 | `minioadmin` / `minioadmin123` |
-| FastAPI (inferencia) | http://localhost:30801 | — |
-| Streamlit | http://localhost:30852 | — |
-| Grafana | http://localhost:30301 | `admin` / `admin` |
-| Prometheus | http://localhost:30910 | sin autenticacion |
-
----
-
 ## Servicios en Kubernetes
 
 | Componente | Namespace | Cluster IP | URL externa |
@@ -176,9 +248,7 @@ Todos los servicios corren en el cluster Kubernetes local (Docker Desktop). Las 
 
 ---
 
-## Apagar y volver a levantar
-
-### Apagar todo
+## Apagar todo
 
 ```bash
 kubectl delete namespace airflow inference minio mlflow observabilidad streamlit postgres
@@ -186,17 +256,3 @@ cd tercer_proyecto/locust && docker compose down
 ```
 
 **Importante:** al borrar el namespace `postgres` se pierden todos los datos — batches, modelos y registros de inferencia. Al volver a levantar hay que correr el DAG desde cero.
-
-### Volver a levantar
-
-```bash
-kubectl apply -f tercer_proyecto/k8s/postgres/
-kubectl apply -f tercer_proyecto/k8s/minio/
-kubectl apply -f tercer_proyecto/k8s/mlflow/
-kubectl apply -f tercer_proyecto/k8s/airflow/
-kubectl apply -f tercer_proyecto/k8s/inference/
-kubectl apply -f tercer_proyecto/k8s/streamlit/
-kubectl apply -f tercer_proyecto/k8s/observabilidad/ --recursive
-```
-
-Espera 2-3 minutos a que todos los pods arranquen, luego entra a Airflow (http://localhost:30810) y activa el DAG `dag_mlops_pipeline` para repoblar la base de datos.
