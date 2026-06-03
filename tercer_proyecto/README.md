@@ -26,6 +26,7 @@ Una vez levantado el sistema, todos los servicios son accesibles desde el navega
 | Grafana | http://localhost:30301 | `admin` / `admin` |
 | Prometheus | http://localhost:30910 | sin autenticacion |
 | Locust | http://localhost:8089 | sin autenticacion |
+| Argo | http://localhost:8081 | `admin` / `bpOmKnPhS8m-2w57` |
 
 ---
 
@@ -53,10 +54,12 @@ Para subir Locust que es el unico que no es parte de k8 sino de docker:
 cd tercer_proyecto/locust
 docker compose up --build
 ```
-Para subir la API del docente:
+Para subir la API del docente y Argo CD:
 
 ```bash
 docker run -d --rm -p 8000:80 --name data-api cristiandiaz13/mlops-puj:data-api-pf-v1
+
+kubectl port-forward svc/argocd-server -n argocd 8081:443
 ```
 ---
 
