@@ -22,7 +22,8 @@ spec:
             - -c
             - |
               mc alias set local http://minio-service.minio.svc.cluster.local:9000 minioadmin minioadmin123 &&
-              mc mb local/mlflow-artifacts --ignore-existing
+              mc mb local/mlflow-artifacts --ignore-existing &&
+              mc mb local/airflow-logs --ignore-existing
       containers:
         - name: mlflow
           image: thomasriverafonseca/p3-mlflow:latest
