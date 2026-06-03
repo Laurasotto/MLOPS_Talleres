@@ -42,7 +42,7 @@ kubectl apply -f tercer_proyecto/k8s/streamlit/
 kubectl apply -f tercer_proyecto/k8s/observabilidad/ --recursive
 ```
 
-Espera 2-3 minutos a que todos los pods arranquen. Luego entra a Airflow (http://localhost:30810) y activa el DAG `dag_mlops_pipeline` para empezar a consumir datos.
+Espera 2-3 minutos a que todos los pods arranquen. Luego entra a Airflow y activar el DAG `dag_mlops_pipeline` para empezar a consumir datos.
 
 Para verificar que todo este corriendo:
 
