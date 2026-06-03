@@ -48,6 +48,11 @@ Para verificar que todo este corriendo:
 ```bash
 kubectl get pods -A | grep -E "postgres|airflow|mlflow|minio|inference|streamlit|observabilidad"
 ```
+Para subir Locust que es el unico que no es parte de k8 sino de docker: 
+```bash
+cd tercer_proyecto/locust
+docker compose up --build
+```
 Para subir la API del docente:
 
 ```bash
