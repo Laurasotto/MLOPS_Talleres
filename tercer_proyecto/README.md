@@ -48,7 +48,11 @@ Para verificar que todo este corriendo:
 ```bash
 kubectl get pods -A | grep -E "postgres|airflow|mlflow|minio|inference|streamlit|observabilidad"
 ```
+Para subir la API del docente:
 
+```bash
+docker run -d --rm -p 8000:80 --name data-api cristiandiaz13/mlops-puj:data-api-pf-v1
+```
 ---
 
 ## Componentes
