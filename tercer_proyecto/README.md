@@ -89,11 +89,6 @@ Las metricas que expone la API son:
 
 Es la herramienta de pruebas de carga. Corre fuera de Kubernetes (con Docker Compose) y genera trafico sintetico contra la API de inferencia para simular multiples usuarios haciendo predicciones al mismo tiempo. Nos sirve para verificar que la API aguanta carga razonable y para poblar las graficas de Prometheus y Grafana con datos reales. Para levantarlo:
 
-```bash
-cd tercer_proyecto/locust
-docker compose up --build
-# Locust UI → http://localhost:8089
-```
 
 ### Argo CD
 
