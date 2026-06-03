@@ -169,7 +169,7 @@ Estas caracteristicas nos permiten anticipar el comportamiento del DAG en cada b
 
 ---
 
-## Diseno de base de datos
+## Diseño de base de datos
 
 Decidimos usar una sola instancia de PostgreSQL con tres schemas separados: `raw`, `clean` y `mlflow`. El schema de MLflow lo crea automaticamente el servidor al arrancar, no lo definimos nosotros.
 
@@ -230,21 +230,6 @@ El modelo es un `RandomForestRegressor` con sklearn, y se guarda como artefacto 
 `decidir_promocion` bifurca hacia `promover_modelo` o `rechazar_modelo`. Si se promueve, el nuevo modelo recibe el alias `production` en el registry. Si no hay ningun modelo productivo todavia, el primer candidato valido se promueve automaticamente para establecer la linea base.
 
 `registrar_resultado` cierra cada corrida escribiendo en `raw.batch_audit` la decision final, las metricas del candidato y el motivo de promocion o rechazo. Esta tabla es la fuente de verdad para el dashboard de Streamlit.
-
----
-
-## Servicios en Kubernetes
-
-| Componente | Namespace | Cluster IP | URL externa |
-|---|---|---|---|
-| Airflow Webserver | `airflow` | `10.103.64.212` | http://localhost:30810 |
-| FastAPI Inferencia | `inference` | `10.105.120.216` | http://localhost:30801 |
-| MinIO Console | `minio` | `10.97.153.193` | http://localhost:30902 |
-| MLflow UI | `mlflow` | `10.109.179.11` | http://localhost:30501 |
-| Grafana | `observabilidad` | `10.107.56.218` | http://localhost:30301 |
-| Prometheus | `observabilidad` | `10.103.70.185` | http://localhost:30910 |
-| PostgreSQL | `postgres` | `10.97.182.122` | solo interno (ClusterIP) |
-| Streamlit | `streamlit` | `10.108.192.161` | http://localhost:30852 |
 
 ---
 
